@@ -142,7 +142,7 @@ object CreateFontsTask extends Task {
               val to = end.toInt
               unicode.addGlyphs(from, to)
               glyphsAdded = true
-              Log.info(Name, s"Added glyphs from $from to $to.")
+              Log.debug(Name, s"Added glyphs from $from to $to.")
             case GlyphFileRegex(file) =>
               fontFile.parent.getChildFile(file) match {
                 case Some(childFile) =>
@@ -155,7 +155,7 @@ object CreateFontsTask extends Task {
                   reader.close()
                   fontFile.parent.removeChild(childFile)
                   glyphsAdded = true
-                  Log.info(Name, "Added glyphs from file. " + fontFile)
+                  Log.debug(Name, "Added glyphs from file. " + fontFile)
                 case None =>
                   Log.warn(Name, "File to load glyphs from not found. " + fontFile.parent + " " + file)
               }
@@ -166,7 +166,7 @@ object CreateFontsTask extends Task {
         if (!glyphsAdded) {
           //Default
           unicode.addAsciiGlyphs()
-          Log.info(Name, "No glyphs specified. Thus adding ASCII glyphs.")
+          Log.debug(Name, "No glyphs specified. Thus adding ASCII glyphs.")
         }
         unicode.setGlyphPageWidth(2048) //Should be enough
         unicode.setGlyphPageHeight(2048)
@@ -189,12 +189,12 @@ object CreateFontsTask extends Task {
 
         val bgColor = params collectFirst {
           case BGRegex(r, g, b, a) =>
-            Log.info(Name, "Background color for font set. " + fontFile)
+            Log.debug(Name, "Background color for font set. " + fontFile)
             new Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16), Integer.parseInt(a, 16))
         }
         val fgColor = params collectFirst {
           case FGRegex(r, g, b, a) =>
-            Log.info(Name, "Foreground color for font set. " + fontFile)
+            Log.debug(Name, "Foreground color for font set. " + fontFile)
             new Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16), Integer.parseInt(a, 16))
         }
 
@@ -209,7 +209,7 @@ object CreateFontsTask extends Task {
             }
           }
           val f = fontFile.parent.addChild(generatedJavaFile)
-          Log.info(Name, "Font file added. " + f)
+          Log.debug(Name, "Font file added. " + f)
         }
       }
       true
