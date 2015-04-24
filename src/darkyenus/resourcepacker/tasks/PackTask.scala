@@ -15,6 +15,9 @@ import darkyenus.resourcepacker.{ResourceDirectory, ResourceFile, Task}
  * Packs all images in .pack. flagged directory using libGDX's texture packer and then flattens it.
  * Can also preblend all packed resources if supplied with .#RRGGBB. flag, see [[PreBlendTask]].
  *
+ * If the directory contains pack.json file (name can contain flags),
+ * it will be used in packing, as with default packing procedures.
+ *
  * @author Darkyen
  */
 object PackTask extends Task {

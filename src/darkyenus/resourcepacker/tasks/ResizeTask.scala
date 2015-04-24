@@ -11,6 +11,15 @@ import darkyenus.resourcepacker.{ResourceFile, SettingKey, Task}
 /**
  * Resizes image by given arguments
  *
+ * Flags:
+ *
+ * .w<W>h<H>. - Image will be W tile-sizes wide and H tile-sizes tall
+ *
+ * .<W>x<H>. - Image will be W pixels wide and H pixels tall
+ *
+ * Settings:
+ * TileSize - Size of tile used by ResizeTask's w<W>h<H> flag pattern
+ *
  * @author Darkyen
  */
 object ResizeTask extends Task {
