@@ -1,7 +1,7 @@
 import java.io.File
 
 import com.esotericsoftware.minlog.Log
-import darkyenus.resourcepacker.{LocalWorkingRootProvider, PackingOperation, LWJGLLauncher}
+import darkyenus.resourcepacker.{PackingOperation, LocalWorkingRootProvider, LWJGLLauncher}
 
 /**
  *

@@ -5,7 +5,7 @@ import java.io.{File, FileOutputStream}
 import com.esotericsoftware.minlog.Log
 import com.google.common.base.Charsets
 import com.google.common.io.{ByteStreams, Files}
-import darkyenus.resourcepacker.{ResourceFile, ResourcePacker, Task}
+import darkyenus.resourcepacker.{ResourceFile, Task}
 import org.lwjgl.LWJGLUtil
 
 import scala.collection.convert.wrapAll._
@@ -142,7 +142,7 @@ object ConvertModelsTask extends Task {
 
   private def copyResourceToFolder(destination: File, resource: String) {
     Files.createParentDirs(destination)
-    val in = ResourcePacker.getClass.getClassLoader.getResourceAsStream(resource)
+    val in = classOf[Task].getClassLoader.getResourceAsStream(resource)
     val out = new FileOutputStream(destination)
     ByteStreams.copy(in, out)
     out.flush()

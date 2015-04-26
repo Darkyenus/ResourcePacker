@@ -1,8 +1,8 @@
 package darkyenus.resourcepacker
 
-import com.badlogic.gdx.{Gdx, ApplicationListener}
 import com.badlogic.gdx.backends.lwjgl.{LwjglApplication, LwjglApplicationConfiguration}
-import com.badlogic.gdx.graphics.{GL20, Color}
+import com.badlogic.gdx.graphics.{Color, GL20}
+import com.badlogic.gdx.{ApplicationListener, Gdx}
 
 /**
  * Private property.
@@ -13,9 +13,14 @@ import com.badlogic.gdx.graphics.{GL20, Color}
 object LWJGLLauncher {
 
   /**
+   * PackingOperation extends this and it allows for adding custom functions.
+   */
+  type Operation = (() => Unit)
+
+  /**
    * See LWJGLLauncher.launchSeq for Seq[PackingOperation]. This is just shortcut to that.
    */
-  def launch(packingOperation: PackingOperation,waitForCompletion:Boolean = true,forceExit:Boolean = true):Unit = {
+  def launch(packingOperation: Operation,waitForCompletion:Boolean = true,forceExit:Boolean = true):Unit = {
     launchSeq(Seq(packingOperation), waitForCompletion, forceExit)
   }
 
@@ -23,7 +28,7 @@ object LWJGLLauncher {
    * Launches all PackingOperations in libGDX context, one after another.
    * @param forceExit see LwjglApplicationConfiguraton.forceExit
    */
-  def launchSeq(packingOperations: Seq[PackingOperation], waitForCompletion:Boolean = true,forceExit:Boolean = true):Unit = {
+  def launchSeq(operations: Seq[Operation], waitForCompletion:Boolean = true,forceExit:Boolean = true):Unit = {
     val config = new LwjglApplicationConfiguration
     config.backgroundFPS = 1
     config.foregroundFPS = 1
@@ -54,8 +59,8 @@ object LWJGLLauncher {
       override def resume() {}
 
       override def create() {
-        for(packingOperation <- packingOperations){
-          ResourcePacker.apply(packingOperation)
+        for(operation <- operations){
+          operation()
         }
         Gdx.app.exit()
       }
