@@ -16,9 +16,9 @@ import java.io.File
  */
 abstract class Task {
 
-  private var janitor:OperationJanitor = null
+  private var janitor: OperationJanitor = null
 
-  final def initializeForOperation(janitor: OperationJanitor): Unit ={
+  final def initializeForOperation(janitor: OperationJanitor): Unit = {
     this.janitor = janitor
     prepare()
   }
@@ -32,11 +32,11 @@ abstract class Task {
    *
    * @return non existent file, ready to be created
    */
-  final def newFile(basedOn:ResourceFile, extension:String = null): File ={
-    janitor.createTempFile(Name,basedOn, extension)
+  final def newFile(basedOn: ResourceFile, extension: String = null): File = {
+    janitor.createTempFile(Name, basedOn, extension)
   }
 
-  final def newFolder():File = {
+  final def newFolder(): File = {
     janitor.createTempDirectory(Name)
   }
 
@@ -44,23 +44,23 @@ abstract class Task {
   /**
    * Called before each run. Reset your internal state here (if you keep any).
    */
-  def prepare(){}
+  def prepare() {}
 
   /** Do your work here.
     * Called once for each file remaining in virtual working filesystem, per run.
     * @return whether the operation did something or not */
-  def operate(file: ResourceFile):Boolean = false
+  def operate(file: ResourceFile): Boolean = false
 
   /** Do your work here.
     * Called once for each directory remaining in virtual working filesystem, per run.
     * @return whether the operation did something or not */
-  def operate(directory: ResourceDirectory):Boolean = false
+  def operate(directory: ResourceDirectory): Boolean = false
 
   /** Do your work here.
     * Called once for each run.
     * @return whether the operation did something or not
     */
-  def operate():Boolean = false
+  def operate(): Boolean = false
 
   /** Repeating tasks will run over and over until they don't success anymore on anything. */
   val repeating = false

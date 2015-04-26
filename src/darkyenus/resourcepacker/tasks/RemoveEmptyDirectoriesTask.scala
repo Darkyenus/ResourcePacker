@@ -10,10 +10,10 @@ import darkyenus.resourcepacker.{ResourceDirectory, Task}
 object RemoveEmptyDirectoriesTask extends Task {
 
   override def operate(emptyDirectory: ResourceDirectory): Boolean = {
-    if(!emptyDirectory.hasChildren && !emptyDirectory.flags.contains("retain")){
-      Log.info(Name,"Empty directory removed. "+emptyDirectory)
+    if (!emptyDirectory.hasChildren && !emptyDirectory.flags.contains("retain")) {
+      Log.info(Name, "Empty directory removed. " + emptyDirectory)
       emptyDirectory.parent.removeChild(emptyDirectory)
       true
-    }else false
+    } else false
   }
 }

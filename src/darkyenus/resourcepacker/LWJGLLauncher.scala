@@ -20,7 +20,7 @@ object LWJGLLauncher {
   /**
    * See LWJGLLauncher.launchSeq for Seq[PackingOperation]. This is just shortcut to that.
    */
-  def launch(packingOperation: Operation,waitForCompletion:Boolean = true,forceExit:Boolean = true):Unit = {
+  def launch(packingOperation: Operation, waitForCompletion: Boolean = true, forceExit: Boolean = true): Unit = {
     launchSeq(Seq(packingOperation), waitForCompletion, forceExit)
   }
 
@@ -28,7 +28,7 @@ object LWJGLLauncher {
    * Launches all PackingOperations in libGDX context, one after another.
    * @param forceExit see LwjglApplicationConfiguraton.forceExit
    */
-  def launchSeq(operations: Seq[Operation], waitForCompletion:Boolean = true,forceExit:Boolean = true):Unit = {
+  def launchSeq(operations: Seq[Operation], waitForCompletion: Boolean = true, forceExit: Boolean = true): Unit = {
     val config = new LwjglApplicationConfiguration
     config.backgroundFPS = 1
     config.foregroundFPS = 1
@@ -59,20 +59,20 @@ object LWJGLLauncher {
       override def resume() {}
 
       override def create() {
-        for(operation <- operations){
+        for (operation <- operations) {
           operation()
         }
         Gdx.app.exit()
       }
     }, config)
-    if(waitForCompletion){
-      try{
+    if (waitForCompletion) {
+      try {
         val loopThreadField = app.getClass.getDeclaredField("mainLoopThread")
         loopThreadField.setAccessible(true)
         val loopThread = loopThreadField.get(app).asInstanceOf[Thread]
         loopThread.join()
-      }catch {
-        case e:Exception =>
+      } catch {
+        case e: Exception =>
           println("Waiting for main loop to stop failed. Incoming stack trace.")
           e.printStackTrace(Console.out)
       }

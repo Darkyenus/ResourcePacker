@@ -166,13 +166,13 @@ object ConvertModelsTask extends Task {
       case LWJGLUtil.PLATFORM_LINUX =>
         executable = new File(result, "fbx-conv-lin64")
         copyResourceToFolder(executable, "fbxconv/linux/fbx-conv-lin64")
-        copyResourceToFolder(new File(result,"libfbxsdk.so"),"fbxconv/linux/libfbxsdk.so")
+        copyResourceToFolder(new File(result, "libfbxsdk.so"), "fbxconv/linux/libfbxsdk.so")
       case _ =>
     }
     result
   }
 
-  import scala.sys.process.Process
+import scala.sys.process.Process
 
   private def executeCommand(postCommand: String) {
     val command = executable.getCanonicalPath + postCommand

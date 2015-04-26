@@ -15,18 +15,18 @@ import scala.collection.mutable.ArrayBuffer
  */
 sealed trait Resource {
 
-  def name:String
+  def name: String
 
   /**
    * Runs given task on itself and children, recursively.
    * @return whether or not it succeeded at least once (on me or someone else)
    */
-  def applyTask(task: Task):Boolean
+  def applyTask(task: Task): Boolean
 
-  var parent:ResourceDirectory
+  var parent: ResourceDirectory
 }
 
-class ResourceDirectory(var directory:File,var parent:ResourceDirectory) extends Resource {
+class ResourceDirectory(var directory: File, var parent: ResourceDirectory) extends Resource {
 
   private val nameParts = directory.getName.split('.')
 
@@ -40,136 +40,137 @@ class ResourceDirectory(var directory:File,var parent:ResourceDirectory) extends
   private val removedFileChildren = new ArrayBuffer[ResourceFile]()
   private val removedDirChildren = new ArrayBuffer[ResourceDirectory]()
 
-  def files:Iterable[ResourceFile] = childrenFiles
+  def files: Iterable[ResourceFile] = childrenFiles
 
-  def directories:Iterable[ResourceDirectory] = childrenDirectories
+  def directories: Iterable[ResourceDirectory] = childrenDirectories
 
-  def hasChildren:Boolean = !(childrenDirectories.isEmpty && childrenFiles.isEmpty)
+  def hasChildren: Boolean = !(childrenDirectories.isEmpty && childrenFiles.isEmpty)
 
-  def removeChild(file:ResourceFile){
+  def removeChild(file: ResourceFile) {
     childrenFiles -= file
     removedFileChildren += file
   }
 
-  def removeChild(dir:ResourceDirectory){
+  def removeChild(dir: ResourceDirectory) {
     childrenDirectories -= dir
     removedDirChildren += dir
   }
 
-  def removeChild(res:Resource){
+  def removeChild(res: Resource) {
     res match {
-      case file:ResourceFile =>
+      case file: ResourceFile =>
         removeChild(file)
-      case dir:ResourceDirectory =>
+      case dir: ResourceDirectory =>
         removeChild(dir)
     }
   }
 
-  def children:Iterable[Resource] = childrenFiles ++ childrenDirectories
+  def children: Iterable[Resource] = childrenFiles ++ childrenDirectories
 
-  def addChild(file:ResourceFile):ResourceFile = {
+  def addChild(file: ResourceFile): ResourceFile = {
     childrenFiles += file
     file.parent = this
     file
   }
 
-  def addChild(file:ResourceDirectory):ResourceDirectory = {
+  def addChild(file: ResourceDirectory): ResourceDirectory = {
     childrenDirectories += file
     file.parent = this
     file
   }
 
-  def addChild(res:Resource):Resource = {
+  def addChild(res: Resource): Resource = {
     res match {
-      case file:ResourceFile =>
+      case file: ResourceFile =>
         addChild(file)
-      case dir:ResourceDirectory =>
+      case dir: ResourceDirectory =>
         addChild(dir)
     }
   }
 
-  def addChild(javaFile:File,createStructure:Boolean = true):Resource = {
-    if(!javaFile.getName.startsWith(".") && (javaFile.isDirectory || javaFile.isFile)){
-      if(javaFile.isFile){
-        val file = new ResourceFile(javaFile,this)
+  def addChild(javaFile: File, createStructure: Boolean = true): Resource = {
+    if (!javaFile.getName.startsWith(".") && (javaFile.isDirectory || javaFile.isFile)) {
+      if (javaFile.isFile) {
+        val file = new ResourceFile(javaFile, this)
         childrenFiles += file
         file
-      }else{
-        val dir = new ResourceDirectory(javaFile,this)
+      } else {
+        val dir = new ResourceDirectory(javaFile, this)
         childrenDirectories += dir
-        if(createStructure){
+        if (createStructure) {
           dir.create()
         }
         dir
       }
     } else {
-      if(!javaFile.exists()){
-        Log.warn("ResourceDirectory","Child not added, because it doesn't exist. (\""+javaFile.getCanonicalPath+"\")")
+      if (!javaFile.exists()) {
+        Log.warn("ResourceDirectory", "Child not added, because it doesn't exist. (\"" + javaFile.getCanonicalPath + "\")")
       }
       null
     }
   }
 
-  def getChildFile(name:String):Option[ResourceFile] = {
-    if(name.contains(".")){
+  def getChildFile(name: String): Option[ResourceFile] = {
+    if (name.contains(".")) {
       val dotIndex = name.indexOf(".")
-      if(dotIndex != name.lastIndexOf(".")){
-        Log.error("ResourceDirectory","There is no child file with two dots in name. There is an error. (\""+name+"\")")
+      if (dotIndex != name.lastIndexOf(".")) {
+        Log.error("ResourceDirectory", "There is no child file with two dots in name. There is an error. (\"" + name + "\")")
         None
-      }else{
-        val newName = name.substring(0,dotIndex)
-        val extension = name.substring(dotIndex+1).toLowerCase
+      } else {
+        val newName = name.substring(0, dotIndex)
+        val extension = name.substring(dotIndex + 1).toLowerCase
         childrenFiles.find(f => f.name == newName && f.extension == extension).orElse(removedFileChildren.find(f => f.name == newName && f.extension == extension))
       }
-    }else{
+    } else {
       childrenFiles.find(_.name == name).orElse(removedFileChildren.find(_.name == name))
     }
   }
 
-  def getChildDirectory(name:String):Option[ResourceDirectory] = {
+  def getChildDirectory(name: String): Option[ResourceDirectory] = {
     childrenDirectories.find(_.name == name).orElse(removedDirChildren.find(_.name == name))
   }
 
-  def create(){
-    for(file <- directory.listFiles()){
-      addChild(file,createStructure = true)
+  def create() {
+    for (file <- directory.listFiles()) {
+      addChild(file, createStructure = true)
     }
   }
 
-  override def toString:String = {
+  override def toString: String = {
     val builder = new StringBuilder
     builder.append("Dir: ")
-    builder.append(directory.getCanonicalPath)//TODO .replace(Task.TempFolderPath,"$TMP")
+    builder.append(directory.getCanonicalPath) //TODO .replace(Task.TempFolderPath,"$TMP")
     builder.append(" (")
     builder.append(name)
-    if(flags.nonEmpty){
+    if (flags.nonEmpty) {
       builder.append('.')
-      flags.addString(builder,".")
+      flags.addString(builder, ".")
     }
     builder.append(")")
     builder.toString()
   }
 
-  override def applyTask(task: Task):Boolean = {
+  override def applyTask(task: Task): Boolean = {
     var wasSuccessful = false
-    if(task.operate(this)){
+    if (task.operate(this)) {
       wasSuccessful = true
     }
     childrenFiles.foreach(child => {
-      if(child.applyTask(task)){
+      if (child.applyTask(task)) {
         wasSuccessful = true
       }
     })
     childrenDirectories.foreach(dir => {
-      if(dir.applyTask(task)){
+      if (dir.applyTask(task)) {
         wasSuccessful = true
       }
     })
     wasSuccessful
   }
 
-  def copyYourself(folder: File,root:Boolean = false){
-    val myFolder = if(root) folder else {
+  def copyYourself(folder: File, root: Boolean = false) {
+    val myFolder = if (root) folder
+    else {
       val result = new File(folder, name)
       result.mkdirs()
       result
@@ -179,32 +180,32 @@ class ResourceDirectory(var directory:File,var parent:ResourceDirectory) extends
   }
 }
 
-class ResourceFile(private var _file:File,var parent:ResourceDirectory) extends Resource {
+class ResourceFile(private var _file: File, var parent: ResourceDirectory) extends Resource {
   private val nameParts = _file.getName.split('.')
 
   val name = nameParts.head
 
-  val flags = nameParts.slice(1,nameParts.length-1).map(_.toLowerCase)
+  val flags = nameParts.slice(1, nameParts.length - 1).map(_.toLowerCase)
 
   val extension = nameParts.last.toLowerCase
 
-  lazy val isImage:Boolean = {
+  lazy val isImage: Boolean = {
     extension == "png" || extension == "jpg" || extension == "jpeg" || extension == "gif"
   }
 
-  lazy val isFont:Boolean = {
+  lazy val isFont: Boolean = {
     extension == "ttf"
   }
 
-  lazy val simpleName:String = name + "." + extension
+  lazy val simpleName: String = name + "." + extension
 
-  override def toString:String = {
+  override def toString: String = {
     val builder = new StringBuilder
-    builder.append(_file.getCanonicalPath)//TODO .replace(Task.TempFolderPath,"$TMP")
+    builder.append(_file.getCanonicalPath) //TODO .replace(Task.TempFolderPath,"$TMP")
     builder.append(" (")
     builder.append(name).append('.')
-    if(flags.nonEmpty){
-      flags.addString(builder,".")
+    if (flags.nonEmpty) {
+      flags.addString(builder, ".")
       builder.append('.')
     }
     builder.append(extension)
@@ -212,20 +213,20 @@ class ResourceFile(private var _file:File,var parent:ResourceDirectory) extends 
     builder.toString()
   }
 
-  def file:File = _file
+  def file: File = _file
 
-  def file_=(f:File){
-    if(!f.exists() || !f.isFile){
+  def file_=(f: File) {
+    if (!f.exists() || !f.isFile) {
       sys.error(s"This should not happen - given file does not exist. (${f.getCanonicalPath})")
     }
     _file = f
   }
 
-  def copyYourself(folder: File){
-    Files.copy(_file,new File(folder,name+'.'+extension))
+  def copyYourself(folder: File) {
+    Files.copy(_file, new File(folder, name + '.' + extension))
   }
 
-  def removeFromParent(){
+  def removeFromParent() {
     parent.removeChild(this)
   }
 
