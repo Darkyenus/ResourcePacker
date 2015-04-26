@@ -53,7 +53,7 @@ object PackTask extends Task {
         case Some(packFile) =>
           json.readFields(settings, jsonReader.parse(new FileReader(packFile.file)))
           packDirectory.removeChild(packFile)
-          Log.info(Name, "Json packer settings loaded. " + packFile.file.getAbsolutePath)
+          if(Log.DEBUG)Log.debug(Name, "Json packer settings loaded. " + packFile.file.getAbsolutePath)
         case None =>
       }
       val packer = new TexturePacker(settings)
@@ -63,7 +63,7 @@ object PackTask extends Task {
           Log.error(Name, "Image could not be loaded. " + image)
         } else {
           packer.addImage(bufferedImage, image.name + (if (image.flags.contains("9")) ".9" else ""))
-          Log.info(Name, s"Image added to pack. " + image)
+          if(Log.DEBUG)Log.debug(Name, s"Image added to pack. " + image)
         }
         packDirectory.removeChild(image)
       }
@@ -74,7 +74,7 @@ object PackTask extends Task {
 
       val preBlendColor = packDirectory.flags collectFirst {
         case PreBlendRegex(r, g, b) =>
-          Log.info(Name, "Blending color for atlas set. " + atlasName)
+          if(Log.DEBUG)Log.debug(Name, "Blending color for atlas set. " + atlasName)
           new Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16))
       }
 

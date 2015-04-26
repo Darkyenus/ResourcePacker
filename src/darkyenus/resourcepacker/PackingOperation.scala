@@ -29,6 +29,16 @@ class PackingOperation(val from: File, val to: File, val settings: Seq[Setting[_
     }
   }
 
+  private def logVirtualTreeAfter(after:Task, tree:ResourceDirectory): Unit ={
+    if(Log.DEBUG){
+      Log.debug("PackingOperation","After running "+after.Name+", virtual filesystem looks like this:")
+      val SB = new StringBuilder
+      SB.append('\n') //Logger already prints something on the line, so this makes it even
+      tree.toPrettyString(SB,1)
+      Log.debug(SB.toString())
+    }
+  }
+
   /**
    * Does the actual work. Should be called only by launcher that has created a necessary context for tasks.
    */
@@ -59,13 +69,16 @@ class PackingOperation(val from: File, val to: File, val settings: Seq[Setting[_
           times += 1
         }
         while (root.applyTask(task)) {
+          logVirtualTreeAfter(task,root)
           times += 1
         }
         Log.debug("ResourcePacker", "Task " + task.Name + " run " + times + " times")
       } else {
         val subMessage = if (task.operate()) "(did run in operate(void))" else "(did not run in operate(void))"
-        if (root.applyTask(task)) Log.debug("ResourcePacker", "Task " + task.Name + " finished and run " + subMessage)
-        else Log.debug("ResourcePacker", "Task " + task.Name + " finished but didn't run " + subMessage)
+        if (root.applyTask(task)) {
+          logVirtualTreeAfter(task,root)
+          Log.debug("ResourcePacker", "Task " + task.Name + " finished and run " + subMessage)
+        } else Log.debug("ResourcePacker", "Task " + task.Name + " finished but didn't run " + subMessage)
       }
     }
 

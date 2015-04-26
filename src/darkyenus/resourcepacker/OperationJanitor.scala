@@ -30,6 +30,7 @@ class OperationJanitor(workingRootProvider: WorkingRootProvider) {
       file.flags.addString(TMP, ".")
       TMP.append('.').append(if (extension == null) file.extension else extension)
       result = new File(workingRoot, TMP.toString())
+      if(Log.DEBUG)Log.debug("OperationJanitor","Trying to create file in \""+workingRoot.getCanonicalPath+"\" called \""+TMP+"\".")
       TMP.clear()
     } while (result.exists())
     result
@@ -41,6 +42,7 @@ class OperationJanitor(workingRootProvider: WorkingRootProvider) {
       TMP.append(taskName).append("-d-")
       fillWithRandomText(TMP)
       result = new File(workingRoot, TMP.toString())
+      TMP.clear()
     } while (result.exists())
     result.mkdirs()
     result

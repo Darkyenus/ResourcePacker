@@ -178,6 +178,26 @@ class ResourceDirectory(var directory: File, var parent: ResourceDirectory) exte
     childrenFiles.foreach(_.copyYourself(myFolder))
     childrenDirectories.foreach(_.copyYourself(myFolder))
   }
+
+  //noinspection AccessorLikeMethodIsUnit
+  def toPrettyString(sb:StringBuilder, level:Int): Unit ={
+    def appendLevel():StringBuilder = {
+      var i = 0
+      while(i < level){
+        sb.append("    ")
+        i += 1
+      }
+      sb
+    }
+
+    for(file <- childrenFiles.toSeq.sortBy(_.name)){
+      appendLevel().append(file.name).append('.').append(file.extension).append('\n')
+    }
+    for(folder <- childrenDirectories.toSeq.sortBy(_.name)){
+      appendLevel().append(folder.name).append('/').append('\n')
+      folder.toPrettyString(sb,level+1)
+    }
+  }
 }
 
 class ResourceFile(private var _file: File, var parent: ResourceDirectory) extends Resource {
