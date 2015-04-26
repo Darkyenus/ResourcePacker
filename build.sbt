@@ -6,8 +6,6 @@ version := "1.1-SNAPSHOT"
 
 scalaVersion := "2.11.5"
 
-javaOptions += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
-
 startYear := Some(2014)
 
 scalacOptions ++= Seq("-deprecation","-feature","-target:jvm-1.6")
@@ -34,6 +32,10 @@ libraryDependencies ++= Seq(
 )
 
 fork in Test := true
+
+javacOptions += "-g"
+
+javaOptions in Test += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"
 
 scalaSource in Test := baseDirectory.value / "testsrc"
 
