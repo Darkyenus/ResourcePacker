@@ -53,13 +53,17 @@ object ResourcePacker {
     for(task <- packingOperation.tasks){
       if(task.repeating){
         var times = 0
+        while(task.operate()){
+          times += 1
+        }
         while(root.applyTask(task)){
           times += 1
         }
         Log.debug("ResourcePacker","Task "+task.Name+" run "+times+" times")
       }else{
-        if(root.applyTask(task))Log.debug("ResourcePacker","Task "+task.Name+" finished and run")
-        else Log.debug("ResourcePacker","Task "+task.Name+" finished but didn't run")
+        val subMessage = if(task.operate()) "(did run in operate(void))" else "(did not run in operate(void))"
+        if(root.applyTask(task))Log.debug("ResourcePacker","Task "+task.Name+" finished and run " + subMessage)
+        else Log.debug("ResourcePacker","Task "+task.Name+" finished but didn't run "+subMessage)
       }
     }
 

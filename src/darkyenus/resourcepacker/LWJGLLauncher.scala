@@ -12,7 +12,18 @@ import com.badlogic.gdx.graphics.{GL20, Color}
  */
 object LWJGLLauncher {
 
+  /**
+   * See LWJGLLauncher.launchSeq for Seq[PackingOperation]. This is just shortcut to that.
+   */
   def launch(packingOperation: PackingOperation,waitForCompletion:Boolean = true,forceExit:Boolean = true):Unit = {
+    launchSeq(Seq(packingOperation), waitForCompletion, forceExit)
+  }
+
+  /**
+   * Launches all PackingOperations in libGDX context, one after another.
+   * @param forceExit see LwjglApplicationConfiguraton.forceExit
+   */
+  def launchSeq(packingOperations: Seq[PackingOperation], waitForCompletion:Boolean = true,forceExit:Boolean = true):Unit = {
     val config = new LwjglApplicationConfiguration
     config.backgroundFPS = 1
     config.foregroundFPS = 1
@@ -43,7 +54,9 @@ object LWJGLLauncher {
       override def resume() {}
 
       override def create() {
-        ResourcePacker.apply(packingOperation)
+        for(packingOperation <- packingOperations){
+          ResourcePacker.apply(packingOperation)
+        }
         Gdx.app.exit()
       }
     }, config)

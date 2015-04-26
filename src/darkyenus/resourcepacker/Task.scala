@@ -4,10 +4,13 @@ import java.io.File
 
 /**
  * Base class for all tasks.
+ * `operate` and `prepare()` methods of `Task`s will be called sequentially on each run (launch of PackingOperation).
  *
- * Multithreading not supported.
- *
- * If your implementation keeps any state, override initialize() to also reset your state.
+ * <br><br>
+ * <b>Implementation guide:</b><br>
+ * - If you don't need multiple instances, implement as scala `object`.<br>
+ * - Override one of the operate() methods, based on what you want to do.<br>
+ * - If you keep any state between any operate() invocations, override prepare() method and reset it there. <br>
  *
  * @author Darkyen
  */
@@ -17,6 +20,7 @@ abstract class Task {
 
   final def initializeForOperation(janitor: OperationJanitor): Unit ={
     this.janitor = janitor
+    prepare()
   }
 
   val Name = getClass.getSimpleName.stripSuffix("$")
@@ -37,13 +41,26 @@ abstract class Task {
   }
 
 
+  /**
+   * Called before each run. Reset your internal state here (if you keep any).
+   */
+  def prepare(){}
+
   /** Do your work here.
+    * Called once for each file remaining in virtual working filesystem, per run.
     * @return whether the operation did something or not */
   def operate(file: ResourceFile):Boolean = false
 
   /** Do your work here.
+    * Called once for each directory remaining in virtual working filesystem, per run.
     * @return whether the operation did something or not */
   def operate(directory: ResourceDirectory):Boolean = false
+
+  /** Do your work here.
+    * Called once for each run.
+    * @return whether the operation did something or not
+    */
+  def operate():Boolean = false
 
   /** Repeating tasks will run over and over until they don't success anymore on anything. */
   val repeating = false
