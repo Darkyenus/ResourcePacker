@@ -14,7 +14,7 @@ scalacOptions ++= Seq("-deprecation","-feature","-target:jvm-1.6")
 
 javacOptions ++= Seq("-source","6","-target","6")
 
-val gdxVersion = "1.5.3"
+val gdxVersion = "1.5.6"
 
 crossScalaVersions in Compile := Seq(scalaVersion.value, "2.10.4")
 
