@@ -86,7 +86,7 @@ Renders image onto background of given color.
 ### PackTask
 
 Packs all images in .pack. flagged directory using libGDX's texture packer and then flattens it.
-Can also preblend all packed resources if supplied with #RRGGBB flag, see [[PreBlendTask]].
+Can also preblend all packed resources if supplied with #RRGGBB flag, see **PreBlendTask**.
 
 If the directory contains pack.json file (name can contain flags),
 it will be used in packing, as with default packing procedures.
@@ -105,7 +105,7 @@ Here are instructions on how to use it in build.sbt based project:
 2. Run `sbt +publish-local` in it
 3. In your project's `project/plugins.sbt` add lines:
 ```
-libraryDependencies += "darkyenus" %% "riverpebbleframeworktools" % "1.0-SNAPSHOT"
+libraryDependencies += "darkyenus" %% "ResourcePacker" % "1.1-SNAPSHOT"
 ```
 4. In your project's build.sbt add lines:
 ```
@@ -117,4 +117,4 @@ TaskKey[Unit]("packResources") := {
 ```
 5. Now you can run `sbt packResources`. That will pack contents of folder `resources` to `assets` in project's root directory.
 
-_Note: A tiny window will be displayed during packing, that is normal, packer needs it for some context, it will hopefully be gone in future releases._
+_Note: A tiny window will be displayed during packing, that is normal, packer needs it for GL context, it will hopefully be gone in future releases._
