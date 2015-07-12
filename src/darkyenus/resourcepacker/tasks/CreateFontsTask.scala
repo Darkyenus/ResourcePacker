@@ -1,10 +1,10 @@
 package darkyenus.resourcepacker.tasks
 
-import java.awt.{Color, Font}
+import java.awt.{BasicStroke, Color, Font}
 import java.io.File
 
 import com.badlogic.gdx.tools.hiero.BMFontUtil
-import com.badlogic.gdx.tools.hiero.unicodefont.effects.{ColorEffect, Effect}
+import com.badlogic.gdx.tools.hiero.unicodefont.effects.{OutlineEffect, ColorEffect, Effect}
 import com.badlogic.gdx.tools.hiero.unicodefont.{HieroSettings, UnicodeFont}
 import com.esotericsoftware.minlog.Log
 import com.google.common.base.Charsets
@@ -43,29 +43,86 @@ import darkyenus.resourcepacker.{ResourceFile, Task}
  */
 object CreateFontsTask extends Task {
 
-  val PaddingRegex = "p(t|b|l|r|)(\\d+)".r
+  private val HexColorCapture = "([0-9A-Fa-f]{1,8})"
+
+  private def parseHexColor(hex:String):Color = {
+    hex.length match {
+      case 1 => //Gray
+        val gray = (Integer.parseInt(hex, 16) * 0xF) min 255
+        new Color(gray, gray, gray)
+      case 2 => //Gray with alpha
+        val gray = (Integer.parseInt(hex.substring(0,1), 16) * 0xF) min 255
+        val alpha = (Integer.parseInt(hex.substring(1, 2), 16) * 0xF) min 255
+        new Color(gray, gray, gray, alpha)
+      case 3 => //RGB
+        val r = (Integer.parseInt(hex.substring(0,1), 16) * 0xF) min 255
+        val g = (Integer.parseInt(hex.substring(1, 2), 16) * 0xF) min 255
+        val b = (Integer.parseInt(hex.substring(2, 3), 16) * 0xF) min 255
+        new Color(r,g,b)
+      case 4 => //RGBA
+        val r = (Integer.parseInt(hex.substring(0,1), 16) * 0xF) min 255
+        val g = (Integer.parseInt(hex.substring(1, 2), 16) * 0xF) min 255
+        val b = (Integer.parseInt(hex.substring(2, 3), 16) * 0xF) min 255
+        val a = (Integer.parseInt(hex.substring(3, 4), 16) * 0xF) min 255
+        new Color(r,g,b,a)
+      case 5 => //RGBAA
+        val r = (Integer.parseInt(hex.substring(0,1), 16) * 0xF) min 255
+        val g = (Integer.parseInt(hex.substring(1, 2), 16) * 0xF) min 255
+        val b = (Integer.parseInt(hex.substring(2, 3), 16) * 0xF) min 255
+        val a = Integer.parseInt(hex.substring(3, 5), 16)
+        new Color(r,g,b,a)
+      case 6 => //RRGGBB
+        val r = Integer.parseInt(hex.substring(0, 2), 16)
+        val g = Integer.parseInt(hex.substring(2, 4), 16)
+        val b = Integer.parseInt(hex.substring(4, 6), 16)
+        new Color(r,g,b)
+      case 7 => //RRGGBBA
+        val r = Integer.parseInt(hex.substring(0, 2), 16)
+        val g = Integer.parseInt(hex.substring(2, 4), 16)
+        val b = Integer.parseInt(hex.substring(4, 6), 16)
+        val a = (Integer.parseInt(hex.substring(6, 7), 16) * 0xF) min 255
+        new Color(r,g,b,a)
+      case 8 => //RRGGBBAA
+        val r = Integer.parseInt(hex.substring(0, 2), 16)
+        val g = Integer.parseInt(hex.substring(2, 4), 16)
+        val b = Integer.parseInt(hex.substring(4, 6), 16)
+        val a = Integer.parseInt(hex.substring(6, 8), 16)
+        new Color(r,g,b,a)
+    }
+  }
+
   /* Examples:
    * pt56     => Padding left 56
    * p89      => Padding everywhere 89
    */
+  val PaddingRegex = "p(t|b|l|r|)(\\d+)".r
+
+  /* Example:
+   * 14          => Size 14
+   */
   val SizeRegex = "(\\d+)".r
-  /*
-  Example:
-  14          => Size 14
+
+  /* Example:
+   * 56-67     => Glyphs 56 to 67 should be added
    */
   val GlyphRangeRegex = "(\\d+)-(\\d+)".r
+
   /* Example:
-     56-67     => Glyphs 56 to 67 should be added
+   * from:glyphs   => Will load all glyphs in file "./glyphs". In UTF-8!
    */
   val GlyphFileRegex = "from (\\w+)".r
+
   /* Example:
-      from:glyphs   => Will load all glyphs in file "./glyphs". In UTF-8!
+   * outline 4 FF0000 miter   => Will create solid red 4px outline with miter joins
    */
+  val OutlineRegex = s"outline (\\d+) $HexColorCapture ?(\\w+)?".r
+  //outline (\\d+) ([0-9A-Fa-f]{3,8}) ?(\\w+)?
 
   /** Matches bg#RRGGBBAA colors for background. Default is Transparent. */
-  val BGRegex = "bg#([0-9A-Fa-f][0-9A-Fa-f])([0-9A-Fa-f][0-9A-Fa-f])([0-9A-Fa-f][0-9A-Fa-f])([0-9A-Fa-f][0-9A-Fa-f])".r
+  val BGRegex = s"bg#$HexColorCapture".r
   /** Matches bg#RRGGBBAA colors for foreground (color of font). Default is White. */
-  val FGRegex = "fg#([0-9A-Fa-f][0-9A-Fa-f])([0-9A-Fa-f][0-9A-Fa-f])([0-9A-Fa-f][0-9A-Fa-f])([0-9A-Fa-f][0-9A-Fa-f])".r
+  val FGRegex = s"fg#$HexColorCapture".r
+
 
 
   override def operate(fontFile: ResourceFile): Boolean = {
@@ -121,7 +178,31 @@ object CreateFontsTask extends Task {
         }
 
         val effects = hieroSettings.getEffects.asInstanceOf[java.util.List[Effect]]
-        effects.add(new ColorEffect())
+
+        params collectFirst {
+          case OutlineRegex(width, hexColor, optJoin) =>
+            val effect = new OutlineEffect(Integer.parseInt(width), parseHexColor(hexColor))
+            if("bevel".equalsIgnoreCase(optJoin)){
+              effect.setJoin(BasicStroke.JOIN_BEVEL)
+            }else if("miter".equalsIgnoreCase(optJoin)){
+              effect.setJoin(BasicStroke.JOIN_MITER)
+            }else if("round".equalsIgnoreCase(optJoin)){
+              effect.setJoin(BasicStroke.JOIN_ROUND)
+            }
+            Log.debug(Name, "Added outline effect: "+effect.getColor+" "+effect.getWidth+"px")
+            effects.add(effect)
+        }
+
+        params collectFirst {
+          case FGRegex(hexColor) =>
+            Log.debug(Name, "Foreground color for font set. " + fontFile)
+            parseHexColor(hexColor)
+        } match {
+          case Some(color) =>
+            effects.add(new ColorEffect(color))
+          case None =>
+            effects.add(new ColorEffect())
+        }
 
         val unicode = new UnicodeFont(fontFile.file.getAbsolutePath, hieroSettings)
 
@@ -129,10 +210,12 @@ object CreateFontsTask extends Task {
         if (params.contains("ascii")) {
           unicode.addAsciiGlyphs()
           glyphsAdded = true
+          Log.debug(Name, "ASCII glyphs added")
         }
         if (params.contains("nehe")) {
           unicode.addNeheGlyphs()
           glyphsAdded = true
+          Log.debug(Name, "NEHE glyphs added")
         }
 
         for (p <- params) {
@@ -188,22 +271,14 @@ object CreateFontsTask extends Task {
         fontFile.parent.removeChild(fontFile)
 
         val bgColor = params collectFirst {
-          case BGRegex(r, g, b, a) =>
+          case BGRegex(hexColor) =>
             Log.debug(Name, "Background color for font set. " + fontFile)
-            new Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16), Integer.parseInt(a, 16))
-        }
-        val fgColor = params collectFirst {
-          case FGRegex(r, g, b, a) =>
-            Log.debug(Name, "Foreground color for font set. " + fontFile)
-            new Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16), Integer.parseInt(a, 16))
+            parseHexColor(hexColor)
         }
 
         for (generatedJavaFile <- outputFolder.listFiles()) {
           if (Files.getFileExtension(generatedJavaFile.getName).equalsIgnoreCase("png")) {
             ImageUtil.clampImage(generatedJavaFile)
-            for (foregroundColor <- fgColor) {
-              ImageUtil.multiplyImage(generatedJavaFile, foregroundColor)
-            }
             for (backgroundColor <- bgColor) {
               ImageUtil.preBlendImage(generatedJavaFile, backgroundColor)
             }
