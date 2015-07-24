@@ -14,7 +14,7 @@ object FlattenTask extends Task {
   override def operate(directory: ResourceDirectory): Boolean = {
     if (directory.flags.contains("flatten")) {
       flatten(directory)
-      Log.info("Directory flattened. (" + directory + ")")
+      Log.info(Name, "Directory flattened. (" + directory + ")")
       true
     } else false
   }
