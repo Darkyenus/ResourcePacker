@@ -36,6 +36,9 @@ abstract class Task {
     janitor.createTempFile(Name, basedOn, extension)
   }
 
+  /**
+   * Creates a new unique (temporary) directory in which Task results can be stored
+   */
   final def newFolder(): File = {
     janitor.createTempDirectory(Name)
   }
