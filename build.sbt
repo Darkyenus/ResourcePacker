@@ -2,9 +2,9 @@ organization := "darkyenus"
 
 name := "ResourcePacker"
 
-version := "1.1"
+version := "1.2"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.10.4"
 
 startYear := Some(2014)
 
@@ -13,8 +13,6 @@ scalacOptions ++= Seq("-deprecation","-feature","-target:jvm-1.6")
 javacOptions ++= Seq("-source","6","-target","6")
 
 val gdxVersion = "1.5.6"
-
-crossScalaVersions in Compile := Seq(scalaVersion.value, "2.10.4")
 
 scalaSource in Compile := baseDirectory.value / "src"
 
