@@ -101,13 +101,13 @@ Does what it says on the tin.
 Right now, it is best used through JVM based build system, like SBT or Gradle.
 Here are instructions on how to use it in build.sbt based project:
 
-1. Download by cloning or downloading this repository
-2. Run `sbt +publish-local` in it
-3. In your project's `project/plugins.sbt` add lines:
+1. In your project's `project/plugins.sbt` add lines:
 ```
-libraryDependencies += "darkyenus" %% "ResourcePacker" % "1.1-SNAPSHOT"
+resolvers += "jitpack" at "https://jitpack.io"
+
+libraryDependencies += "com.github.Darkyenus" % "ResourcePacker" % "1.2"
 ```
-4. In your project's build.sbt add lines:
+1. In your project's build.sbt add lines:
 ```
 import darkyenus.resourcepacker.{PackingOperation, LWJGLLauncher}
 
@@ -115,6 +115,8 @@ TaskKey[Unit]("packResources") := {
   LWJGLLauncher.launch(new PackingOperation(baseDirectory.value / "resources",baseDirectory.value / "assets"))
 }
 ```
-5. Now you can run `sbt packResources`. That will pack contents of folder `resources` to `assets` in project's root directory.
+1. Now you can run `sbt packResources`. That will pack contents of folder `resources` to `assets` in project's root directory.
 
 _Note: A tiny window will be displayed during packing, that is normal, packer needs it for GL context, it will hopefully be gone in future releases._
+
+_Another note: Jitpack builds it using Scala 2.10 - default for sbt build scripts - and does not support cross compiling. If you use different Scala version for your sbt, you will probably have to cross compile it yourself._
