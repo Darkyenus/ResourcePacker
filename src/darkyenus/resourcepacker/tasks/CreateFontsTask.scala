@@ -155,7 +155,7 @@ object CreateFontsTask extends Task {
       }
 
       if (size < 0) {
-        Log.error(Name, "Define size of font. (example.14.ttf) " + fontFile)
+        Log.debug(Name, "Not rasterizing font, size not specified." + fontFile)
       } else if (size == 0) {
         Log.error(Name, "Size must be bigger than 0. " + fontFile)
       } else {

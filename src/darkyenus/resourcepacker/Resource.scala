@@ -214,7 +214,7 @@ class ResourceFile(private var _file: File, var parent: ResourceDirectory) exten
   }
 
   lazy val isFont: Boolean = {
-    extension == "ttf"
+    extension == "ttf" || extension == "otf"
   }
 
   lazy val simpleName: String = name + "." + extension
