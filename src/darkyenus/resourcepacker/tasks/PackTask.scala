@@ -56,6 +56,15 @@ object PackTask extends Task {
           if(Log.DEBUG)Log.debug(Name, "Json packer settings loaded. " + packFile.file.getAbsolutePath)
         case None =>
       }
+
+      if(settings.duplicatePadding && (settings.paddingX < 2 && settings.paddingY < 2)){
+        Log.warn(Name, "duplicatePadding is true, but padding is less than 2 so it won't have any effect")
+      } else if(settings.duplicatePadding && (settings.paddingX < 2 || settings.paddingY < 2)){
+        if(Log.DEBUG)Log.debug(Name,
+          "duplicatePadding is true, but padding of one dimension is less than 2 so it won't have any effect "+
+            "(paddingX = "+settings.paddingX+", paddingY = "+settings.paddingY+")")
+      }
+
       val packer = new TexturePacker(settings)
       for (image <- packDirectory.files if image.isImage) {
         val bufferedImage = ImageIO.read(image.file)
