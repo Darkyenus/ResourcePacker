@@ -10,6 +10,11 @@ Each file in input directory is named as follows:
 ```
 name.flag1.flag2.<...>.flagN.extension
 ```
+Flags surrounded with `"` are considered to be part of the name not as a flags.
+This allows producing files (and directories) in format `name.something.extension`.
+
+For example, for "iOS Settings bundle" (a directory named `Settings.bundle`),
+have directory named `Settings."bundle"`.
 
 Directories follow similar pattern, there is just no `.extension`.
 

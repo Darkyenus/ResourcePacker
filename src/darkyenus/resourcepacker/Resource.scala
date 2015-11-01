@@ -30,9 +30,18 @@ class ResourceDirectory(var directory: File, var parent: ResourceDirectory) exte
 
   private val nameParts = directory.getName.split('.')
 
-  val name = nameParts.head
+  def isVerbatimFlag(flag:String):Boolean = {
+    flag.length >= 2 && flag.startsWith("\"") && flag.endsWith("\"")
+  }
 
-  val flags = nameParts.tail
+  val name = {
+    (nameParts.head +: nameParts.tail.collect{
+      case flag if isVerbatimFlag(flag) =>
+        flag.substring(1, flag.length-1)
+    }).mkString(".")
+  }
+
+  val flags = nameParts.tail.filterNot(isVerbatimFlag)
 
   private var childrenDirectories = Set[ResourceDirectory]()
   private var childrenFiles = Set[ResourceFile]()
