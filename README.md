@@ -24,6 +24,29 @@ See testresources directory for examples.
 
 There is a couple of tasks that run by default in following order (order is important).
 
+### IgnoreTask
+Removes files and folders with `ignore` flag. Useful when you want to keep some (for example .gimp)
+files in your resources directory but you don't want to export them.
+
+### CreateIOSIconTask
+iOS requires quite a lot different icons of different sizes to be created (18 in total in some extreme cases!),
+which is very tedious and boring.
+This task automatically creates iOS icons from svg vector image.
+
+**Flags**:
+* `iOSIcon` - Marks the file for conversion, for universal apps
+* `iPhoneIcon` - Marks the file for conversion, for iPhone apps only
+* `iPadIcon` - Marks the file for conversion, for iPad apps only
+
+Append `Small` to any flag to create small icons as well (used for spotlight & settings)
+Append `Artwork` to any flag to create big artwork icon dimensions as well (for ad-hoc distribution only).
+NOTE: Artwork does not currently work properly, because extension (png) is left there.
+ 
+When files are already present (by name), they are not created, so specialized icons can be created.
+
+Sizes are from Apple Developer Library:
+https://developer.apple.com/library/ios/qa/qa1686/_index.html
+
 ### CreateFontsTask
 Rasterizes .ttf fonts. Font must have .N. flag where N is font size in pixels.
 
@@ -55,7 +78,7 @@ Converts obj and fbx files to g3db or different format.
 
 ### FlattenTask
 
-Flattens directories marked with `flatten`.
+Flattens directories marked with `flatten`. Flattening is not recursive.
 
 ### ResizeTask
 

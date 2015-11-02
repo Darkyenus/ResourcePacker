@@ -43,11 +43,12 @@ object RasterizeTask extends Task {
     */
   val PixelHeightPattern = """x(\d+)""".r
 
+  val SVGExtension = "svg"
 
   /** Do your work here.
     * @return whether the operation did something or not */
   override def operate(svg: ResourceFile): Boolean = {
-    if (svg.extension.equals("svg")) {
+    if (svg.extension.equals(SVGExtension)) {
       val resultFile = newFile(svg, "png")
       val in = new FileInputStream(svg.file)
       val input = new TranscoderInput(in)

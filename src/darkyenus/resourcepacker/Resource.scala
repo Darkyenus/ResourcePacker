@@ -226,7 +226,7 @@ class ResourceFile(private var _file: File, var parent: ResourceDirectory) exten
     extension == "ttf" || extension == "otf"
   }
 
-  lazy val simpleName: String = name + "." + extension
+  lazy val simpleName: String = if (extension.isEmpty) name else name + '.' + extension
 
   override def toString: String = {
     val builder = new StringBuilder
@@ -252,7 +252,7 @@ class ResourceFile(private var _file: File, var parent: ResourceDirectory) exten
   }
 
   def copyYourself(folder: File) {
-    Files.copy(_file, new File(folder, name + '.' + extension))
+    Files.copy(_file, new File(folder, simpleName))
   }
 
   def removeFromParent() {

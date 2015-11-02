@@ -8,5 +8,5 @@ package object tasks {
   /**
    * Collection of all tasks from this package in logical order.
    */
-  val DefaultTasks: Seq[Task] = Seq(IgnoreTask, CreateFontsTask, PyxelTilesTask, ConvertModelsTask, FlattenTask, ResizeTask, RasterizeTask, PreBlendTask, PackTask, RemoveEmptyDirectoriesTask)
+  val DefaultTasks: Seq[Task] = Seq(IgnoreTask, CreateIOSIconTask, CreateFontsTask, PyxelTilesTask, ConvertModelsTask, FlattenTask, ResizeTask, RasterizeTask, PreBlendTask, PackTask, RemoveEmptyDirectoriesTask)
 }
