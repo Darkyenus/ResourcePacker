@@ -133,7 +133,7 @@ Here are instructions on how to use it in build.sbt based project:
 ```
 resolvers += "jitpack" at "https://jitpack.io"
 
-libraryDependencies += "com.github.Darkyenus" % "ResourcePacker" % "1.2"
+libraryDependencies += "com.github.Darkyenus" %% "ResourcePacker" % "1.4"
 ```
 1. In your project's build.sbt add lines:
 ```
