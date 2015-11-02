@@ -7,12 +7,6 @@ import com.google.common.io.Files
 
 import scala.collection.mutable.ArrayBuffer
 
-/**
- * Private property.
- * User: Darkyen
- * Date: 16/07/14
- * Time: 20:44
- */
 sealed trait Resource {
 
   def name: String
@@ -24,6 +18,10 @@ sealed trait Resource {
   def applyTask(task: Task): Boolean
 
   var parent: ResourceDirectory
+
+  def removeFromParent() {
+    parent.removeChild(this)
+  }
 }
 
 class ResourceDirectory(var directory: File, var parent: ResourceDirectory) extends Resource {
@@ -41,7 +39,7 @@ class ResourceDirectory(var directory: File, var parent: ResourceDirectory) exte
     }).mkString(".")
   }
 
-  val flags = nameParts.tail.filterNot(isVerbatimFlag)
+  val flags = nameParts.tail.filterNot(isVerbatimFlag).map(_.toLowerCase)
 
   private var childrenDirectories = Set[ResourceDirectory]()
   private var childrenFiles = Set[ResourceFile]()
@@ -212,11 +210,23 @@ class ResourceDirectory(var directory: File, var parent: ResourceDirectory) exte
 class ResourceFile(private var _file: File, var parent: ResourceDirectory) extends Resource {
   private val nameParts = _file.getName.split('.')
 
-  val name = nameParts.head
+  def isVerbatimFlag(flag:String):Boolean = {
+    flag.length >= 2 && flag.startsWith("\"") && flag.endsWith("\"")
+  }
 
-  val flags = nameParts.slice(1, nameParts.length - 1).map(_.toLowerCase)
+  val name = {
+    (nameParts.head +: nameParts.tail.collect{
+      case flag if isVerbatimFlag(flag) =>
+        flag.substring(1, flag.length-1)
+    }).mkString(".")
+  }
 
-  val extension = nameParts.last.toLowerCase
+  val flags = nameParts.tail.filterNot(isVerbatimFlag).dropRight(1).map(_.toLowerCase)
+
+  val extension = {
+    val flagParts = nameParts.tail.filterNot(isVerbatimFlag)
+    if(flagParts.isEmpty) "" else flagParts.last.toLowerCase
+  }
 
   lazy val isImage: Boolean = {
     extension == "png" || extension == "jpg" || extension == "jpeg" || extension == "gif"
@@ -253,10 +263,6 @@ class ResourceFile(private var _file: File, var parent: ResourceDirectory) exten
 
   def copyYourself(folder: File) {
     Files.copy(_file, new File(folder, simpleName))
-  }
-
-  def removeFromParent() {
-    parent.removeChild(this)
   }
 
   /**

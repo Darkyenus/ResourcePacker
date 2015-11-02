@@ -13,6 +13,8 @@ name.flag1.flag2.<...>.flagN.extension
 Flags surrounded with `"` are considered to be part of the name not as a flags.
 This allows producing files (and directories) in format `name.something.extension`.
 
+NOTE: Flags and extension are converted to lowercase prior to processing to simplify flag matching.
+
 For example, for "iOS Settings bundle" (a directory named `Settings.bundle`),
 have directory named `Settings."bundle"`.
 
@@ -133,7 +135,7 @@ Here are instructions on how to use it in build.sbt based project:
 ```
 resolvers += "jitpack" at "https://jitpack.io"
 
-libraryDependencies += "com.github.Darkyenus" %% "ResourcePacker" % "1.4"
+libraryDependencies += "com.github.Darkyenus" %% "ResourcePacker" % "1.5"
 ```
 1. In your project's build.sbt add lines:
 ```

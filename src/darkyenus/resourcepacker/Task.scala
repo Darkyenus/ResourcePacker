@@ -37,6 +37,18 @@ abstract class Task {
   }
 
   /**
+   * Creates a new file for writing arbitrary data to.
+   * Its name will start with given file name and its extension (if specified) will be `extension`.
+   * Returned file will not exist.
+   *
+   * @param extension to give the file or null if irrelevant
+   * @return non existent file, ready to be created
+   */
+  final def newBlankFile(fileName:String, extension:String = null):File = {
+    janitor.createTempFile(Name, fileName, extension)
+  }
+
+  /**
    * Creates a new unique (temporary) directory in which Task results can be stored
    */
   final def newFolder(): File = {

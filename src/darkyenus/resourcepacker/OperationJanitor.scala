@@ -19,7 +19,7 @@ class OperationJanitor(workingRootProvider: WorkingRootProvider) {
   /** Who uses it last cleans it. */
   private val TMP = new StringBuilder
 
-  def createTempFile(taskName: String, file: ResourceFile, extension: String = null): File = {
+  def createTempFile(taskName: String, file: ResourceFile, extension: String): File = {
     var result: File = null
     do {
       TMP.append(file.name).append('.')
@@ -31,6 +31,24 @@ class OperationJanitor(workingRootProvider: WorkingRootProvider) {
       TMP.append('.').append(if (extension == null) file.extension else extension)
       result = new File(workingRoot, TMP.toString())
       if(Log.DEBUG)Log.debug("OperationJanitor","Trying to create file in \""+workingRoot.getCanonicalPath+"\" called \""+TMP+"\".")
+      TMP.clear()
+    } while (result.exists())
+    result
+  }
+
+  def createTempFile(taskName: String, fileName:String, extension: String): File = {
+    var result: File = null
+    do {
+      TMP.append(fileName).append('.')
+
+      TMP.append(taskName).append("-f-")
+      fillWithRandomText(TMP)
+      TMP.append('.')
+      if(extension != null){
+        TMP.append(extension)
+      }
+      result = new File(workingRoot, TMP.toString())
+      if(Log.DEBUG)Log.debug("OperationJanitor","Trying to create file from scratch in \""+workingRoot.getCanonicalPath+"\" called \""+TMP+"\".")
       TMP.clear()
     } while (result.exists())
     result
