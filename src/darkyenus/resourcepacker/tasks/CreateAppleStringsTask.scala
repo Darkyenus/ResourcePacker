@@ -11,6 +11,9 @@ import darkyenus.resourcepacker.{ResourceDirectory, ResourceFile, Task}
  * is used as strings value.
  *
  * Whole directory is then removed and its flags are carried to the created file.
+ *
+ * .strings reference:
+ * https://developer.apple.com/library/prerelease/ios/documentation/Cocoa/Conceptual/LoadingResources/Strings/Strings.html
  */
 object CreateAppleStringsTask extends Task {
 
