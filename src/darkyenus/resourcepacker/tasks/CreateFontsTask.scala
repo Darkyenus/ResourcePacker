@@ -3,9 +3,9 @@ package darkyenus.resourcepacker.tasks
 import java.awt.{BasicStroke, Color, Font}
 import java.io.File
 
-import com.badlogic.gdx.tools.hiero.BMFontUtil
-import com.badlogic.gdx.tools.hiero.unicodefont.effects.{OutlineEffect, ColorEffect, Effect}
-import com.badlogic.gdx.tools.hiero.unicodefont.{HieroSettings, UnicodeFont}
+import com.badlogic.gdx.tools.hiero.{BMFontUtil, HieroSettings}
+import com.badlogic.gdx.tools.hiero.unicodefont.effects.{ColorEffect, Effect, OutlineEffect}
+import com.badlogic.gdx.tools.hiero.unicodefont.UnicodeFont
 import com.esotericsoftware.minlog.Log
 import com.google.common.base.Charsets
 import com.google.common.io.Files

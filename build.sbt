@@ -12,7 +12,7 @@ scalacOptions ++= Seq("-deprecation","-feature","-target:jvm-1.6")
 
 javacOptions ++= Seq("-source","6","-target","6")
 
-val gdxVersion = "1.5.6"
+val gdxVersion = "1.9.2"
 
 scalaSource in Compile := baseDirectory.value / "src"
 
