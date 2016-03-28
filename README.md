@@ -99,6 +99,8 @@ Raterizes .svg files using default size (in file) or one specified in flags.
 
 **Flags**:
 * `[W]x[H]` - W is width in pixels and H is height in pixels
+* `scaled` - Search parent directories for flags in form of @Nx, where N is positive integer.
+Rasterize additional images with dimensions N times bigger and append @Nx to its name.
 
 One of them (W or H) can be left blank to infer the size by maintaining ratio.
 
@@ -135,7 +137,7 @@ Here are instructions on how to use it in build.sbt based project:
 ```
 resolvers += "jitpack" at "https://jitpack.io"
 
-libraryDependencies += "com.github.Darkyenus" %% "ResourcePacker" % "1.5"
+libraryDependencies += "com.github.Darkyenus" %% "ResourcePacker" % "1.6"
 ```
 1. In your project's build.sbt add lines:
 ```

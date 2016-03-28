@@ -33,7 +33,18 @@ abstract class Task {
    * @return non existent file, ready to be created
    */
   final def newFile(basedOn: ResourceFile, extension: String = null): File = {
-    janitor.createTempFile(Name, basedOn, extension)
+    janitor.createTempFile(Name, basedOn.name, basedOn, extension)
+  }
+
+  /**
+    * Creates a new file based on given existing file.
+    * It will have the same characteristics, extension (unless specified otherwise), specified name
+    * and will not exist. It can be used as a drop-in replacement for active ResourceFile.file.
+    *
+    * @return non existent file, ready to be created
+    */
+  final def newFileNamed(basedOn: ResourceFile, fileName:String, extension: String = null): File = {
+    janitor.createTempFile(Name, fileName, basedOn, extension)
   }
 
   /**

@@ -210,7 +210,7 @@ class ResourceDirectory(var directory: File, var parent: ResourceDirectory) exte
 class ResourceFile(private var _file: File, var parent: ResourceDirectory) extends Resource {
   private val nameParts = _file.getName.split('.')
 
-  def isVerbatimFlag(flag:String):Boolean = {
+  private def isVerbatimFlag(flag:String):Boolean = {
     flag.length >= 2 && flag.startsWith("\"") && flag.endsWith("\"")
   }
 

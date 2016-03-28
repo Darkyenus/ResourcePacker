@@ -19,10 +19,10 @@ class OperationJanitor(workingRootProvider: WorkingRootProvider) {
   /** Who uses it last cleans it. */
   private val TMP = new StringBuilder
 
-  def createTempFile(taskName: String, file: ResourceFile, extension: String): File = {
+  def createTempFile(taskName: String, fileName:String, file: ResourceFile, extension: String): File = {
     var result: File = null
     do {
-      TMP.append(file.name).append('.')
+      TMP.append(fileName).append('.')
 
       TMP.append(taskName).append("-f-")
       fillWithRandomText(TMP)
