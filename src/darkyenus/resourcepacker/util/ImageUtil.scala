@@ -76,6 +76,8 @@ object ImageUtil {
     val h = raster.getHeight
 
     def isCullable(xs: Int, ys: Int, dx: Int, dy: Int): Boolean = {
+      if(xs < 0 || ys < 0 || xs >= w || ys >= h) return false
+
       var x = xs
       var y = ys
 
