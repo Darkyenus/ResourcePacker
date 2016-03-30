@@ -58,7 +58,7 @@ object RasterizeTask extends Task {
   /** Do your work here.
     * @return whether the operation did something or not */
   override def operate(svg: ResourceFile): Boolean = {
-    if (svg.extension.equals(SVGExtension)) {
+    if (svg.extension.equals(SVGExtension) && svg.flags.contains("rasterize")) {
 
       def rasterize(factor:Int): Unit ={
         val resultFile = newFileNamed(svg, svg.name + (if(factor == 1) "" else "@"+factor+"x"), "png")

@@ -26,6 +26,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.tools.texturepacker.ColorBleedEffect;
 import com.badlogic.gdx.utils.*;
+import com.google.common.io.Files;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -79,7 +80,9 @@ public class TexturePacker {
 	public void pack (File outputDir, String packFileName) {
 		if (packFileName.endsWith(settings.atlasExtension))
 			packFileName = packFileName.substring(0, packFileName.length() - settings.atlasExtension.length());
-		outputDir.mkdirs();
+		if (!outputDir.mkdirs() && !outputDir.isDirectory()) {
+			System.err.println("Failed to create output directory "+outputDir+", output will probably fail.");
+		}
 
 		final int[] scales = settings.scales;
 		final Array<Rect> rects = new Array<Rect>(false, imageSourcesByName.size * scales.length);
@@ -100,7 +103,7 @@ public class TexturePacker {
 			for (int a = 0; a < size - 1; a++) {
 				final Rect rectA = rects.get(a);
 				for (int b = a+1; b < size; b++) {
-					final Rect rectB = rects.get(a);
+					final Rect rectB = rects.get(b);
 					if(rectA.source.isIdentical(rectB.source)){
 						rectA.aliases.add(rectB.source);
 						rects.removeIndex(b);
@@ -113,7 +116,12 @@ public class TexturePacker {
 
 		final Array<Page> pages = packer.pack(rects);
 
-		for (int scale : scales) {
+		Arrays.sort(scales);
+		//Iterate in reverse so that smallest scale (usually 1, base scale) is left in "pages"
+		// and we can write correct atlas file
+		for (int i = scales.length - 1; i >= 0; i--) {
+			final int scale = scales[i];
+
 			if(settings.pot && !MathUtils.isPowerOfTwo(scale)){
 				System.err.println("Skipping scale "+scale+" because only power of two scales can be used with power of two textures");
 				continue;
@@ -122,8 +130,7 @@ public class TexturePacker {
 		}
 
 		try {
-			//TODO Write this for first scale, not for what was last written image!
-			writePackFile(outputDir, packFileName, pages, 1);
+			writePackFile(outputDir, packFileName, pages, scales[0]);
 		} catch (IOException ex) {
 			throw new RuntimeException("Error writing pack file.", ex);
 		}
@@ -180,7 +187,7 @@ public class TexturePacker {
 			if (!settings.silent) System.out.println("Writing " + canvas.getWidth() + "x" + canvas.getHeight() + ": " + outputFile);
 
 			for (Rect rect : page.outputRects) {
-				BufferedImage image = rect.source.getImage(scaleFactor);//TODO Return trimmed image!
+				BufferedImage image = rect.source.createTrimmedImage(scaleFactor);
 				int iw = image.getWidth();
 				int ih = image.getHeight();
 				int rectX = page.x + rect.pageX, rectY = page.y + page.height - rect.pageY - rect.pageHeight;
@@ -237,7 +244,7 @@ public class TexturePacker {
 				copy(image, 0, 0, iw, ih, canvas, rectX, rectY, rect.rotated);
 				if (settings.debug) {
 					g.setColor(Color.magenta);
-					g.drawRect(rectX, rectY, rect.pageWidth - settings.paddingX - 1, rect.pageHeight - settings.paddingY - 1);
+					g.drawRect(rectX, rectY, (rect.pageWidth - settings.paddingX - 1) * scaleFactor, (rect.pageHeight - settings.paddingY - 1) * scaleFactor);
 				}
 			}
 
@@ -302,7 +309,9 @@ public class TexturePacker {
 	private void writePackFile (File outputDir, String scaledPackFileName, Array<Page> pages, int scaleFactor) throws IOException {
 		File packFile = new File(outputDir, scaledPackFileName + settings.atlasExtension);
 		File packDir = packFile.getParentFile();
-		packDir.mkdirs();
+		if (!packDir.mkdirs() && !packDir.isDirectory()) {
+			System.err.println("Failed to create pack file directory "+packDir+", output will probably fail.");
+		}
 
 		if (packFile.exists()) {
 			// Make sure there aren't duplicate names.
@@ -346,24 +355,26 @@ public class TexturePacker {
 	}
 
 	private void writeRect (FileWriter writer, Page page, Rect rect, ImageSource source, int scaleFactor) throws IOException {
+		@SuppressWarnings("UnnecessaryLocalVariable")
+		final int sF = scaleFactor;
+
 		writer.write(source.name + "\n");
 		writer.write("  rotate: " + rect.rotated + "\n");
-		writer.write("  xy: " + (page.x + rect.pageX) + ", " + (page.y + page.height - rect.pageHeight - rect.pageY) + "\n");
+		writer.write("  xy: " + (page.x + rect.pageX) * sF + ", " + (page.y + page.height - rect.pageHeight - rect.pageY) * sF + "\n");
 
-		writer.write("  size: " + rect.pageWidth + ", " + rect.pageHeight + "\n");
+		writer.write("  size: " + rect.pageWidth * sF + ", " + rect.pageHeight * sF + "\n");
 		if (source.splits != null) {
 			writer.write("  split: " //
-				+ source.splits[0] + ", " + source.splits[1] + ", " + source.splits[2] + ", " + source.splits[3] + "\n");
+				+ source.splits[0] * sF + ", " + source.splits[1] * sF + ", " + source.splits[2] * sF + ", " + source.splits[3] * sF + "\n");
 		}
 		if (source.pads != null) {
 			if (source.splits == null) writer.write("  split: 0, 0, 0, 0\n");
-			writer.write("  pad: " + source.pads[0] + ", " + source.pads[1] + ", " + source.pads[2] + ", " + source.pads[3] + "\n");
+			writer.write("  pad: " + source.pads[0] * sF + ", " + source.pads[1] * sF + ", " + source.pads[2] * sF + ", " + source.pads[3] * sF + "\n");
 		}
-		final BufferedImage image = source.getImage(scaleFactor);
-		final int originalWidth = image.getWidth(), originalHeight = image.getHeight();
 
+		final int originalWidth = source.getBaseWidth() * sF, originalHeight = source.getBaseHeight() * sF;
 		writer.write("  orig: " + originalWidth + ", " + originalHeight + "\n");
-		writer.write("  offset: " + source.stripOffX + ", " + (originalHeight - rect.pageHeight - source.stripOffY) + "\n");
+		writer.write("  offset: " + source.stripOffX * scaleFactor + ", " + (originalHeight - (rect.pageHeight + source.stripOffY) * scaleFactor) + "\n");
 		writer.write("  index: " + source.index + "\n");
 	}
 
@@ -497,6 +508,7 @@ public class TexturePacker {
 		public Settings () {
 		}
 
+		@SuppressWarnings("unused")
 		public Settings (Settings settings) {
 			fast = settings.fast;
 			rotation = settings.rotation;
@@ -557,6 +569,7 @@ public class TexturePacker {
 		public int[] splits;
 		public int[] pads;
 		private int stripOffX, stripOffY, stripWidth, stripHeight;
+		private int baseWidth, baseHeight;
 		private final BufferedImage[] bitmapsByFactor = new BufferedImage[MAX_SCALE_FACTOR];
 
 		private final File[] filesByFactor = new File[MAX_SCALE_FACTOR];
@@ -583,6 +596,23 @@ public class TexturePacker {
 		}
 
 		private BufferedImage loadImage(File file, int fileLevel, int targetLevel, boolean ninepatch){
+			final String[] bitmapExtensions = ImageIO.getReaderFileSuffixes();
+			final String extension = Files.getFileExtension(file.getName());
+
+			for (String bitmapExtension : bitmapExtensions) {
+				if(extension.equalsIgnoreCase(bitmapExtension)){
+					return loadBitmapImage(file, fileLevel, targetLevel, ninepatch);
+				}
+			}
+
+			if("svg".equalsIgnoreCase(extension)){
+				return loadVectorImage(file, targetLevel);
+			}
+
+			throw new IllegalArgumentException("Can't load image: unrecognized extension \""+extension+"\"");
+		}
+
+		private BufferedImage loadBitmapImage(File file, int fileLevel, int targetLevel, boolean ninepatch){
 			BufferedImage image;
 			try {
 				image = ImageIO.read(file);
@@ -596,20 +626,19 @@ public class TexturePacker {
 			if(ninepatch){
 				image = processNinepatch(image, fileLevel);
 			}
-/*image = new BufferedImage(
-					source.getColorModel(),
-					source.getRaster().createWritableChild(offsetX, offsetY, regionWidth, regionHeight,0, 0, null),
-					source.getColorModel().isAlphaPremultiplied(),
-					null);*///Is this needed ever? TODO?
 			return scaleImage(image, fileLevel, targetLevel);
 		}
 
-		public final BufferedImage getImage(int scaleFactor){
-			final BufferedImage image = getImage(scaleFactor, true);
-			if(image == null){
-				throw new IllegalStateException("Failed to create image for "+name+" @ "+scaleFactor);
-			}
-			return image;
+		private BufferedImage loadVectorImage(File file, int targetLevel){
+			return validateImage(SVGRasterizer.rasterize(file, targetLevel));
+		}
+
+		public final int getBaseWidth() {
+			return baseWidth;
+		}
+
+		public final int getBaseHeight() {
+			return baseHeight;
 		}
 
 		protected final BufferedImage getImage(int scaleFactor, boolean create){
@@ -618,10 +647,32 @@ public class TexturePacker {
 			if(existing != null){
 				return existing;
 			} else if(create) {
-				return bitmapsByFactor[scaleFactor - 1] = createImage(scaleFactor);
+				final BufferedImage result = createImage(scaleFactor);
+				if(result == null){
+					throw new IllegalStateException("Failed to create image for "+name+" @ "+scaleFactor);
+				}
+				return bitmapsByFactor[scaleFactor - 1] = result;
 			} else {
 				return null;
 			}
+		}
+
+		protected final BufferedImage createTrimmedImage(int scaleFactor) {
+			final BufferedImage image = getImage(scaleFactor, true);
+			assert image != null;
+			if(stripOffX == 0 && stripOffY == 0 && stripWidth == baseWidth && stripHeight == baseHeight){
+				return image;
+			}
+
+			return new BufferedImage(
+					image.getColorModel(),
+					image.getRaster().createWritableChild(
+							stripOffX * scaleFactor,
+							stripOffY * scaleFactor,
+							stripWidth * scaleFactor,
+							stripHeight * scaleFactor, 0, 0, null),
+					image.getColorModel().isAlphaPremultiplied(),
+					null);
 		}
 
 		private BufferedImage createImage(int scaleFactor) {
@@ -648,9 +699,10 @@ public class TexturePacker {
 		public final Rect validate(Settings settings, int[] scales){
 			final Rectangle essentialBounds = new Rectangle();
 			final Rectangle scaleEssentialBounds = new Rectangle();
+			boolean firstBound = true;
 
 			for (int scaleFactor : scales) {
-				final BufferedImage image = getImage(scaleFactor);
+				final BufferedImage image = getImage(scaleFactor, true);
 				stripWhitespace(settings, image, scaleEssentialBounds);
 				final float scale = 1f/scaleFactor;
 				scaleEssentialBounds.x = scaleEssentialBounds.x * scale;
@@ -658,10 +710,19 @@ public class TexturePacker {
 				scaleEssentialBounds.width = scaleEssentialBounds.width * scale;
 				scaleEssentialBounds.height = scaleEssentialBounds.height * scale;
 
-				essentialBounds.merge(scaleEssentialBounds);
+				if(firstBound){
+					essentialBounds.set(scaleEssentialBounds);
+					firstBound = false;
+				}else{
+					essentialBounds.merge(scaleEssentialBounds);
+				}
 			}
 
-			final BufferedImage base = getImage(1);
+			final BufferedImage base = getImage(1, true);
+			assert base != null;
+			baseWidth = base.getWidth();
+			baseHeight = base.getHeight();
+
 			stripOffX = Math.max(0, MathUtils.floorPositive(essentialBounds.x));
 			stripOffY = Math.max(0, MathUtils.floorPositive(essentialBounds.y));
 			stripWidth = Math.min(base.getWidth(), MathUtils.ceilPositive(essentialBounds.width));
@@ -680,23 +741,11 @@ public class TexturePacker {
 			} else return image;
 		}
 
-		protected final BufferedImage loadImage(File file){
-			BufferedImage image;
-			try {
-				image = ImageIO.read(file);
-			} catch (IOException ex) {
-				throw new RuntimeException("Error reading image: " + file, ex);
-			}
-			if (image == null) throw new RuntimeException("Unable to read image: " + file);
-
-			return validateImage(image);
-		}
-
 		protected final BufferedImage scaleImage(BufferedImage image, int fromFactor, int toFactor){
 			if(fromFactor == toFactor){
 				return image;
 			}
-			final double scale = toFactor / fromFactor;
+			final double scale = (double)toFactor / (double)fromFactor;
 			final int width = (int) Math.round(image.getWidth() * scale);
 			final int height = (int) Math.round(image.getHeight() * scale);
 			BufferedImage newImage = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
@@ -708,7 +757,7 @@ public class TexturePacker {
 				g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 				g.drawImage(image, 0, 0, width, height, null);
 			}
-			return image;
+			return newImage;
 		}
 
 		protected final BufferedImage processNinepatch(BufferedImage image, int scaleFactor){
@@ -939,7 +988,7 @@ public class TexturePacker {
 
 		public final boolean isIdentical(ImageSource to){
 			//TODO Implement
-			return false;
+			return this.equals(to);
 		}
 
 		static private String hash (BufferedImage image) {

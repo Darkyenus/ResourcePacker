@@ -2,14 +2,13 @@ package darkyenus.resourcepacker.tasks.densitypack
 
 import java.awt.Color
 import java.io.FileReader
-import javax.imageio.ImageIO
 
 import com.badlogic.gdx.utils.{Json, JsonReader}
 import com.esotericsoftware.minlog.Log
 import com.google.common.io.Files
-import darkyenus.resourcepacker.{ResourceDirectory, ResourceFile, Task}
 import darkyenus.resourcepacker.tasks.{FlattenTask, PreBlendTask}
 import darkyenus.resourcepacker.util.ImageUtil
+import darkyenus.resourcepacker.{ResourceDirectory, ResourceFile, Task}
 
 /**
   * Packs all images in .pack. flagged directory using libGDX's texture packer and then flattens it.
@@ -52,7 +51,10 @@ object DensityPackTask extends Task {
       settings.bleed = true
       settings.stripWhitespaceX = true
       settings.stripWhitespaceY = true
-      settings.alphaThreshold = 0
+      settings.alphaThreshold = 1
+      settings.silent = false
+      settings.ignoreBlankImages = false
+      //settings.debug = true
       packDirectory.files.find(file => file.name == "pack" && file.extension == "json") match {
         case Some(packFile) =>
           json.readFields(settings, jsonReader.parse(new FileReader(packFile.file)))
@@ -74,24 +76,19 @@ object DensityPackTask extends Task {
       }.toSet + 1).toSeq.sorted.toArray
 
       val packer = new TexturePacker(settings)
-      for (image <- packDirectory.files if image.isImage) {
-        val bufferedImage = ImageIO.read(image.file)
-        if (bufferedImage == null) {
-          Log.error(Name, "Image could not be loaded. " + image)
-        } else {
-          var name = image.name
-          var scale = 1
+      for (image <- packDirectory.files if image.isImage || image.extension.equalsIgnoreCase("svg")) {
+        var name = image.name
+        var scale = 1
 
-          name match {
-            case ScaledNameRegex(trimmedName, scaleFactor) =>
-              name = trimmedName
-              scale = scaleFactor.toInt
-            case _ =>
-          }
-
-          packer.addImage(image.file, name, -1, scale, image.flags.contains("9"))
-          if(Log.DEBUG)Log.debug(Name, s"Image added to pack. " + image)
+        name match {
+          case ScaledNameRegex(trimmedName, scaleFactor) =>
+            name = trimmedName
+            scale = scaleFactor.toInt
+          case _ =>
         }
+
+        packer.addImage(image.file, name, -1, scale, image.flags.contains("9"))
+        if(Log.DEBUG)Log.debug(Name, s"Image added to pack. " + image)
         packDirectory.removeChild(image)
       }
 
