@@ -9,6 +9,7 @@ import com.google.common.io.Files
 import darkyenus.resourcepacker.tasks.{FlattenTask, PreBlendTask}
 import darkyenus.resourcepacker.util.ImageUtil
 import darkyenus.resourcepacker.{ResourceDirectory, ResourceFile, Task}
+import org.apache.batik.transcoder.SVGAbstractTranscoder
 
 /**
   * Packs all images in .pack. flagged directory using libGDX's texture packer and then flattens it.
@@ -33,6 +34,24 @@ object DensityPackTask extends Task {
   val ScalesRegex = "\\@([1-9]+[0-9]*)x".r
 
   val ScaledNameRegex = "(.+)\\@([1-9]+[0-9]*)x?".r
+
+  /**
+  Example:
+	450x789   => Image will be 450 pixels wide and 789 pixels tall
+    */
+  val PixelSizePattern = """(\d+)x(\d+)""".r
+
+  /**
+  Example:
+    450x   => Image will be 450 pixels wide and height will be inferred
+    */
+  val PixelWidthPattern = """(\d+)x""".r
+
+  /**
+  Example:
+    x789   => Image will be 789 pixels tall and width will be inferred
+    */
+  val PixelHeightPattern = """x(\d+)""".r
 
   private val json = new Json()
   private val jsonReader = new JsonReader
@@ -87,7 +106,18 @@ object DensityPackTask extends Task {
           case _ =>
         }
 
-        packer.addImage(image.file, name, -1, scale, image.flags.contains("9"))
+        val imageSource = packer.addImage(image.file, name, -1, scale, image.flags.contains("9"))
+
+        image.flags.collectFirst {
+          case PixelSizePattern(width, height) =>
+            imageSource.rasterizationHints.put(SVGAbstractTranscoder.KEY_WIDTH, width.toInt.toFloat.asInstanceOf[java.lang.Float])
+            imageSource.rasterizationHints.put(SVGAbstractTranscoder.KEY_HEIGHT, height.toInt.toFloat.asInstanceOf[java.lang.Float])
+          case PixelWidthPattern(width) =>
+            imageSource.rasterizationHints.put(SVGAbstractTranscoder.KEY_WIDTH, width.toInt.toFloat.asInstanceOf[java.lang.Float])
+          case PixelHeightPattern(height) =>
+            imageSource.rasterizationHints.put(SVGAbstractTranscoder.KEY_HEIGHT, height.toInt.toFloat.asInstanceOf[java.lang.Float])
+        }
+
         if(Log.DEBUG)Log.debug(Name, s"Image added to pack. " + image)
         packDirectory.removeChild(image)
       }

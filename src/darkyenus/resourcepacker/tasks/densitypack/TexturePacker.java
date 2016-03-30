@@ -27,6 +27,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.tools.texturepacker.ColorBleedEffect;
 import com.badlogic.gdx.utils.*;
 import com.google.common.io.Files;
+import org.apache.batik.transcoder.TranscodingHints;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -65,7 +66,7 @@ public class TexturePacker {
 	}
 
 
-	public void addImage(File file, String name, int index, int scaleFactor, boolean ninepatch){
+	public ImageSource addImage(File file, String name, int index, int scaleFactor, boolean ninepatch){
 		IntMap<ImageSource> indices = imageSourcesByName.get(name);
 		if(indices == null){
 			imageSourcesByName.put(name, indices = new IntMap<ImageSource>(8));
@@ -75,6 +76,7 @@ public class TexturePacker {
 			indices.put(index, source = new ImageSource(name, index));
 		}
 		source.addImage(file, scaleFactor, ninepatch);
+		return source;
 	}
 
 	public void pack (File outputDir, String packFileName) {
@@ -130,7 +132,8 @@ public class TexturePacker {
 		}
 
 		try {
-			writePackFile(outputDir, packFileName, pages, scales[0]);
+			assert scales[0] == 1;
+			writePackFile(outputDir, packFileName, pages);
 		} catch (IOException ex) {
 			throw new RuntimeException("Error writing pack file.", ex);
 		}
@@ -306,7 +309,7 @@ public class TexturePacker {
 		}
 	}
 
-	private void writePackFile (File outputDir, String scaledPackFileName, Array<Page> pages, int scaleFactor) throws IOException {
+	private void writePackFile (File outputDir, String scaledPackFileName, Array<Page> pages) throws IOException {
 		File packFile = new File(outputDir, scaledPackFileName + settings.atlasExtension);
 		File packDir = packFile.getParentFile();
 		if (!packDir.mkdirs() && !packDir.isDirectory()) {
@@ -339,7 +342,7 @@ public class TexturePacker {
 
 			page.outputRects.sort();
 			for (Rect rect : page.outputRects) {
-				writeRect(writer, page, rect, rect.source, scaleFactor);
+				writeRect(writer, page, rect, rect.source);
 				//noinspection unchecked
 				Array<ImageSource> aliases = new Array(rect.aliases.size);
 				for (ImageSource alias : rect.aliases) {
@@ -347,34 +350,31 @@ public class TexturePacker {
 				}
 				aliases.sort();
 				for (ImageSource alias : aliases) {
-					writeRect(writer, page, rect, alias, scaleFactor);
+					writeRect(writer, page, rect, alias);
 				}
 			}
 		}
 		writer.close();
 	}
 
-	private void writeRect (FileWriter writer, Page page, Rect rect, ImageSource source, int scaleFactor) throws IOException {
-		@SuppressWarnings("UnnecessaryLocalVariable")
-		final int sF = scaleFactor;
-
+	private void writeRect (FileWriter writer, Page page, Rect rect, ImageSource source) throws IOException {
 		writer.write(source.name + "\n");
 		writer.write("  rotate: " + rect.rotated + "\n");
-		writer.write("  xy: " + (page.x + rect.pageX) * sF + ", " + (page.y + page.height - rect.pageHeight - rect.pageY) * sF + "\n");
+		writer.write("  xy: " + (page.x + rect.pageX) + ", " + (page.y + page.height - rect.pageHeight - rect.pageY) + "\n");
 
-		writer.write("  size: " + rect.pageWidth * sF + ", " + rect.pageHeight * sF + "\n");
+		writer.write("  size: " + rect.source.stripWidth + ", " + rect.source.stripHeight + "\n");
 		if (source.splits != null) {
 			writer.write("  split: " //
-				+ source.splits[0] * sF + ", " + source.splits[1] * sF + ", " + source.splits[2] * sF + ", " + source.splits[3] * sF + "\n");
+				+ source.splits[0] + ", " + source.splits[1] + ", " + source.splits[2] + ", " + source.splits[3] + "\n");
 		}
 		if (source.pads != null) {
 			if (source.splits == null) writer.write("  split: 0, 0, 0, 0\n");
-			writer.write("  pad: " + source.pads[0] * sF + ", " + source.pads[1] * sF + ", " + source.pads[2] * sF + ", " + source.pads[3] * sF + "\n");
+			writer.write("  pad: " + source.pads[0] + ", " + source.pads[1] + ", " + source.pads[2] + ", " + source.pads[3] + "\n");
 		}
 
-		final int originalWidth = source.getBaseWidth() * sF, originalHeight = source.getBaseHeight() * sF;
+		final int originalWidth = source.getBaseWidth(), originalHeight = source.getBaseHeight();
 		writer.write("  orig: " + originalWidth + ", " + originalHeight + "\n");
-		writer.write("  offset: " + source.stripOffX * scaleFactor + ", " + (originalHeight - (rect.pageHeight + source.stripOffY) * scaleFactor) + "\n");
+		writer.write("  offset: " + source.stripOffX + ", " + (originalHeight - rect.source.stripHeight - source.stripOffY) + "\n");
 		writer.write("  index: " + source.index + "\n");
 	}
 
@@ -572,6 +572,7 @@ public class TexturePacker {
 		private int baseWidth, baseHeight;
 		private final BufferedImage[] bitmapsByFactor = new BufferedImage[MAX_SCALE_FACTOR];
 
+		public final ObjectMap<TranscodingHints.Key, Object> rasterizationHints = new ObjectMap<TranscodingHints.Key, Object>();
 		private final File[] filesByFactor = new File[MAX_SCALE_FACTOR];
 		private final boolean[] ninepatchByFactor = new boolean[MAX_SCALE_FACTOR];
 
@@ -606,7 +607,7 @@ public class TexturePacker {
 			}
 
 			if("svg".equalsIgnoreCase(extension)){
-				return loadVectorImage(file, targetLevel);
+				return loadVectorImage(file, fileLevel, targetLevel);
 			}
 
 			throw new IllegalArgumentException("Can't load image: unrecognized extension \""+extension+"\"");
@@ -629,8 +630,8 @@ public class TexturePacker {
 			return scaleImage(image, fileLevel, targetLevel);
 		}
 
-		private BufferedImage loadVectorImage(File file, int targetLevel){
-			return validateImage(SVGRasterizer.rasterize(file, targetLevel));
+		private BufferedImage loadVectorImage(File file, int sourceLevel, int targetLevel){
+			return validateImage(SVGRasterizer.rasterize(file, sourceLevel, targetLevel, rasterizationHints));
 		}
 
 		public final int getBaseWidth() {
@@ -768,7 +769,7 @@ public class TexturePacker {
 			final int width = image.getWidth() - 2, height = image.getHeight() - 2;
 			BufferedImage newImage = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
 			newImage.getGraphics().drawImage(image, 0, 0, width, height, 1, 1, width + 1, height + 1, null);
-			return image;
+			return newImage;
 		}
 
 		/** Returns the splits, or null if the image had no splits or the splits were only a single region. Splits are an int[4] that
