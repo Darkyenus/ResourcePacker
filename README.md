@@ -1,4 +1,5 @@
 # Resource Packer #
+[![](https://jitpack.io/v/Darkyenus/ResourcePacker.svg)](https://jitpack.io/#Darkyenus/ResourcePacker)
 
 ## What does it do ##
 
