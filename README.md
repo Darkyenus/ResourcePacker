@@ -96,9 +96,10 @@ Resizes image by given arguments
 
 ### RasterizeTask
 
-Raterizes .svg files using default size (in file) or one specified in flags.
+Rasterize .svg files with "rasterize" flag using default size (in file) or one specified in flags.
 
 **Flags**:
+* `rasterize` - Mark this file for rasterisation by this task
 * `[W]x[H]` - W is width in pixels and H is height in pixels
 * `scaled` - Search parent directories for flags in form of @Nx, where N is positive integer.
 Rasterize additional images with dimensions N times bigger and append @Nx to its name.
@@ -124,9 +125,26 @@ Can also preblend all packed resources if supplied with #RRGGBB flag, see **PreB
 If the directory contains pack.json file (name can contain flags),
 it will be used in packing, as with default packing procedures.
 
+### DensityPackTask
+
+More advanced version of PackTask
+
+Can generate multiple atlas image files with different, Apple-like densities, that is, with @2x scheme.
+Files with @Nx (where N is scale level) are assigned to that level.
+Missing density levels are created from existing ones, either by up/downscaling or by rasterization with different dimensions.
+Automatically rasterizes .svg files, flags from RasterizeTask can be used for specifying scale.
+
+Generates only one atlas file and (potentially) multiple image files.
+Therefore, all images are packed to the same locations, only all coordinates are multiplied by N.
+This allows for simple runtime density switching.
+ 
+Scale level 1 is specified automatically, others (usually 2) can be added with @Nx flag (@2x in case of level 2).
+Note that if the level is not a power of two (for example 3), `pot` setting must be set to false (default is true),
+otherwise the level will be ignored and warning will be emitted.
+
 ### RemoveEmptyDirectoriesTask
 
-Does what it says on the tin.
+Removes all directories which are empty from the output.
 
 
 ## How to use ##
@@ -138,7 +156,7 @@ Here are instructions on how to use it in build.sbt based project:
 ```
 resolvers += "jitpack" at "https://jitpack.io"
 
-libraryDependencies += "com.github.Darkyenus" %% "ResourcePacker" % "1.6"
+libraryDependencies += "com.github.Darkyenus" %% "ResourcePacker" % "1.7"
 ```
 1. In your project's build.sbt add lines:
 ```
