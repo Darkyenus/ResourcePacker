@@ -1,8 +1,10 @@
 package darkyenus.resourcepacker
 
+import java.awt.Desktop
+
+import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.backends.lwjgl3.{Lwjgl3Application, Lwjgl3ApplicationConfiguration}
 import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.{ApplicationAdapter, Gdx}
 
 /**
  * Private property.
@@ -38,14 +40,23 @@ object LWJGLLauncher {
 
     config.setInitialVisible(false)
 
-    new Lwjgl3Application(new ApplicationAdapter {
-      override def create() {
-        for (operation <- operations) {
-          operation()
+    Desktop.getDesktop
+
+    try {
+      new Lwjgl3Application(new ApplicationAdapter {
+        override def create() {
+          for (operation <- operations) {
+            operation()
+          }
+          throw new ExitLwjglBeforeInputPoll
         }
-        Gdx.app.exit()
-      }
-    }, config)
+      }, config)
+    } catch {
+      case _:ExitLwjglBeforeInputPoll => //Good
+    }
   }
 
+  /** Thrown after all operations are done to exit libGDX's loop before first input poll, which causes crash, because
+    * we are in (basically) headless mode. */
+  private final class ExitLwjglBeforeInputPoll extends RuntimeException
 }

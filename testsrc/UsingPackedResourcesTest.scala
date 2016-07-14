@@ -1,16 +1,20 @@
-import com.badlogic.gdx.graphics.{GL20, Color}
+import com.badlogic.gdx.graphics.{Color, GL20}
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.utils.viewport.ScreenViewport
-import com.badlogic.gdx.{Gdx, ApplicationAdapter}
-import com.badlogic.gdx.backends.lwjgl.LwjglApplication
-import com.badlogic.gdx.scenes.scene2d.ui.{Image, TextButton, Table, Skin}
+import com.badlogic.gdx.{ApplicationAdapter, Gdx}
+import com.badlogic.gdx.backends.lwjgl3.{Lwjgl3Application, Lwjgl3ApplicationConfiguration}
+import com.badlogic.gdx.scenes.scene2d.ui.{Image, Skin, Table, TextButton}
 
 /**
  * Simple libGDX application that uses packed resources.
  * @author Darkyen
  */
 object UsingPackedResourcesTest extends App {
-  new LwjglApplication(new ApplicationAdapter {
+  val config = new Lwjgl3ApplicationConfiguration
+  config.setTitle("UsingPackedResourcesTest")
+  config.setWindowedMode(800, 600)
+  config.disableAudio(true)
+  new Lwjgl3Application(new ApplicationAdapter {
 
     lazy val skin = new Skin(Gdx.files.local("target/RPTestResult/UISkin.json"))
 
@@ -35,5 +39,5 @@ object UsingPackedResourcesTest extends App {
       stage.draw()
     }
 
-  },"UsingPackedResourcesTest",800,600)
+  },config)
 }

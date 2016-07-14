@@ -32,9 +32,11 @@ libraryDependencies ++= Seq(
 
 fork in Test := true
 
+//javaOptions in Test += "-XstartOnFirstThread"
+
 javacOptions += "-g"
 
-javaOptions in Test += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"
+javaOptions in Test += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
 
 scalaSource in Test := baseDirectory.value / "testsrc"
 
