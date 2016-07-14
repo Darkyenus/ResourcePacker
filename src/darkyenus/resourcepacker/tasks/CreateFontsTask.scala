@@ -37,7 +37,7 @@ import darkyenus.resourcepacker.{ResourceFile, Task}
  * nehe - add all nehe glyphs (codepoints 32 through 128)
  * }}}
  *
- * When no glyphs are specified, all ASCII glyphs are added.
+ * When no glyphs are specified, all available glyphs are added.
  *
  * @author Darkyen
  */
@@ -171,11 +171,14 @@ object CreateFontsTask extends Task {
         hieroSettings.setPaddingLeft(paddingLeft)
         hieroSettings.setPaddingRight(paddingRight)
 
+        var renderType = UnicodeFont.RenderType.Java
+
         if (params.contains("native")) {
-          hieroSettings.setNativeRendering(true)
-        } else {
-          hieroSettings.setNativeRendering(false)
+          renderType = UnicodeFont.RenderType.Native
+        } else if(params.contains("freetype")) {
+          renderType = UnicodeFont.RenderType.FreeType
         }
+        Log.debug(Name, s"Using $renderType render type")
 
         val effects = hieroSettings.getEffects.asInstanceOf[java.util.List[Effect]]
 
@@ -206,6 +209,9 @@ object CreateFontsTask extends Task {
         }
 
         val unicode = new UnicodeFont(fontFile.file.getAbsolutePath, hieroSettings)
+        unicode.setRenderType(renderType)
+        unicode.setGlyphPageWidth(2048) //Should be enough
+        unicode.setGlyphPageHeight(2048)
 
         var glyphsAdded = false
         if (params.contains("ascii")) {
@@ -251,22 +257,20 @@ object CreateFontsTask extends Task {
           val total = font.getNumGlyphs
           val sb = new java.lang.StringBuilder
           var codePoint = 0
-          while (codePoint <= 0xFFFF){
+          while (codePoint <= 0x10FFFF){
             if(font.canDisplay(codePoint)){
               sb.appendCodePoint(codePoint)
               if(sb.length() == total){
                 //break, because Scala.
-                codePoint = 0xFFFF
+                codePoint = 0x10FFFF
               }
             }
             codePoint += 1
           }
 
           unicode.addGlyphs(sb.toString)
-          Log.debug(Name, "No glyphs specified - adding all existing glyphs ("+sb.length()+"/"+total+" (up to U+FFFF))")
+          Log.debug(Name, "No glyphs specified - adding all existing glyphs ("+sb.length()+"/"+total+" (up to U+10FFFF))")
         }
-        unicode.setGlyphPageWidth(2048) //Should be enough
-        unicode.setGlyphPageHeight(2048)
 
         val hieroUtil = new BMFontUtil(unicode)
 
