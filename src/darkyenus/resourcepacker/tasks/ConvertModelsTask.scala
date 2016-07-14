@@ -6,7 +6,7 @@ import com.esotericsoftware.minlog.Log
 import com.google.common.base.Charsets
 import com.google.common.io.{ByteStreams, Files}
 import darkyenus.resourcepacker.{ResourceFile, Task}
-import org.lwjgl.LWJGLUtil
+import org.lwjgl.system.Platform
 
 import scala.collection.convert.wrapAll._
 import scala.util.matching.Regex
@@ -126,12 +126,12 @@ object ConvertModelsTask extends Task {
 
     ExecutablesDirectory
 
-    LWJGLUtil.getPlatform match {
-      case LWJGLUtil.PLATFORM_MACOSX =>
+    Platform.get() match {
+      case Platform.MACOSX =>
         executeCommand(postCommandOptions)
-      case LWJGLUtil.PLATFORM_WINDOWS =>
+      case Platform.WINDOWS =>
         Log.error(Name, "Fbx-conv on Windows not yet supported.")
-      case LWJGLUtil.PLATFORM_LINUX =>
+      case Platform.LINUX =>
         Log.error(Name, "Fbx-conv on Linux not yet supported.")
       case unk =>
         Log.error(Name, "Unknown platform reported by LWJGL: " + unk)
@@ -151,19 +151,19 @@ object ConvertModelsTask extends Task {
     destination.setExecutable(true, false)
   }
 
-  private var executable: File = null
+  private var executable: File = _
 
   private lazy val ExecutablesDirectory: File = {
     val result = newFolder()
-    LWJGLUtil.getPlatform match {
-      case LWJGLUtil.PLATFORM_MACOSX =>
+    Platform.get() match {
+      case Platform.MACOSX =>
         executable = new File(result, "fbx-conv-mac")
         copyResourceToFolder(executable, "fbxconv/osx/fbx-conv-mac")
         copyResourceToFolder(new File(result, "libfbxsdk.dylib"), "fbxconv/osx/libfbxsdk.dylib")
-      case LWJGLUtil.PLATFORM_WINDOWS =>
+      case Platform.WINDOWS =>
         executable = new File(result, "fbx-conv-win32.exe")
         copyResourceToFolder(executable, "fbxconv/windows/fbx-conv-win32.exe")
-      case LWJGLUtil.PLATFORM_LINUX =>
+      case Platform.LINUX =>
         executable = new File(result, "fbx-conv-lin64")
         copyResourceToFolder(executable, "fbxconv/linux/fbx-conv-lin64")
         copyResourceToFolder(new File(result, "libfbxsdk.so"), "fbxconv/linux/libfbxsdk.so")
