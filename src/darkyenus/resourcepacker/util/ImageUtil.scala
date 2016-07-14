@@ -106,7 +106,10 @@ object ImageUtil {
       cullableFromRight += 1
     }
 
-    val resultImage = new BufferedImage(w - cullableFromRight, h - cullableFromBottom, originalImage.getType)
+    val culledWidth = Math.max(w - cullableFromRight, 1)
+    val culledHeight = Math.max(h - cullableFromBottom, 1)
+
+    val resultImage = new BufferedImage(culledWidth, culledHeight, originalImage.getType)
     val resultG = resultImage.createGraphics()
     resultG.setBackground(new Color(0, 0, 0, 0))
     resultG.clearRect(0, 0, resultImage.getWidth, resultImage.getHeight)

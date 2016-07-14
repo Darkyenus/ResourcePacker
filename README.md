@@ -96,10 +96,10 @@ Resizes image by given arguments
 
 ### RasterizeTask
 
-Rasterize .svg files with "rasterize" flag using default size (in file) or one specified in flags.
+Rasterize .svg files with "rasterize" (or "r") flag using default size (in file) or one specified in flags.
 
 **Flags**:
-* `rasterize` - Mark this file for rasterisation by this task
+* `rasterize` or `r` - Mark this file for rasterisation by this task
 * `[W]x[H]` - W is width in pixels and H is height in pixels
 * `scaled` - Search parent directories for flags in form of @Nx, where N is positive integer.
 Rasterize additional images with dimensions N times bigger and append @Nx to its name.

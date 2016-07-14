@@ -10,10 +10,13 @@ import org.apache.batik.transcoder.image.{ImageTranscoder, PNGTranscoder}
 import org.apache.batik.transcoder.{SVGAbstractTranscoder, TranscoderInput, TranscoderOutput}
 
 /**
- * Raterizes .svg files using default size (in file) or one specified in flags.
+ * Rasterizes .svg files with .rasterize. (or .r. for short) flag using default size (in file) or one specified in flags.
  *
  * Flags:
  * {{{
+ *   .rasterize. (or .r.)
+ *   Triggers rasterization
+ *
  *   .[W]x[H].
  *   W - width in pixels
  *   H - height in pixels
@@ -58,7 +61,7 @@ object RasterizeTask extends Task {
   /** Do your work here.
     * @return whether the operation did something or not */
   override def operate(svg: ResourceFile): Boolean = {
-    if (svg.extension.equals(SVGExtension) && svg.flags.contains("rasterize")) {
+    if (svg.extension.equals(SVGExtension) && (svg.flags.contains("rasterize") || svg.flags.contains("r"))) {
 
       def rasterize(factor:Int): Unit ={
         val resultFile = newFileNamed(svg, svg.name + (if(factor == 1) "" else "@"+factor+"x"), "png")

@@ -195,13 +195,14 @@ object CreateFontsTask extends Task {
 
         params collectFirst {
           case FGRegex(hexColor) =>
-            Log.debug(Name, "Foreground color for font set. " + fontFile)
             parseHexColor(hexColor)
         } match {
           case Some(color) =>
             effects.add(new ColorEffect(color))
+            Log.debug(Name, "Foreground color for font set to "+color+" for " + fontFile)
           case None =>
-            effects.add(new ColorEffect())
+            effects.add(new ColorEffect(Color.WHITE))
+            Log.debug(Name, "Foreground color for font set to default white for " + fontFile)
         }
 
         val unicode = new UnicodeFont(fontFile.file.getAbsolutePath, hieroSettings)
@@ -247,9 +248,22 @@ object CreateFontsTask extends Task {
         }
 
         if (!glyphsAdded) {
-          //Default
-          unicode.addAsciiGlyphs()
-          Log.debug(Name, "No glyphs specified. Thus adding ASCII glyphs.")
+          val total = font.getNumGlyphs
+          val sb = new java.lang.StringBuilder
+          var codePoint = 0
+          while (codePoint <= 0xFFFF){
+            if(font.canDisplay(codePoint)){
+              sb.appendCodePoint(codePoint)
+              if(sb.length() == total){
+                //break, because Scala.
+                codePoint = 0xFFFF
+              }
+            }
+            codePoint += 1
+          }
+
+          unicode.addGlyphs(sb.toString)
+          Log.debug(Name, "No glyphs specified - adding all existing glyphs ("+sb.length()+"/"+total+" (up to U+FFFF))")
         }
         unicode.setGlyphPageWidth(2048) //Should be enough
         unicode.setGlyphPageHeight(2048)
