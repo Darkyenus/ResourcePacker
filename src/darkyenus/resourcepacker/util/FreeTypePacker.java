@@ -28,6 +28,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.StringBuilder;
@@ -42,14 +43,12 @@ public class FreeTypePacker {
 
     final FreeType.Library library;
     final FreeType.Face face;
-    final String name;
     final FileHandle fontFile;
 
     /** Creates a new generator from the given font file. Uses {@link FileHandle#length()} to determine the file size. If the file
      * length could not be determined (it was 0), an extra copy of the font bytes is performed. Throws a
      * {@link GdxRuntimeException} if loading did not succeed. */
-    public FreeTypePacker(String name, FileHandle fontFile) {
-        this.name = name;
+    public FreeTypePacker(FileHandle fontFile) {
         this.fontFile = fontFile;
         int fileSize = (int)fontFile.length();
 
@@ -98,7 +97,9 @@ public class FreeTypePacker {
         }
     }
 
-    public void generate (FreeTypeFontParameter parameter, FileHandle outputFolder) {
+    public Array<FileHandle> generate (FreeTypeFontParameter parameter, FileHandle outputFolder) {
+        final Array<FileHandle> resultFiles = new Array<>(FileHandle.class);
+
         if (!face.setPixelSizes(0, parameter.size)) throw new GdxRuntimeException("Couldn't set size for font");
 
         // set general font data
@@ -116,14 +117,18 @@ public class FreeTypePacker {
                     parameter.borderStraight ? FreeType.FT_STROKER_LINEJOIN_MITER_FIXED : FreeType.FT_STROKER_LINEJOIN_ROUND, 0);
         }
 
-        int remaining = face.getNumGlyphs();
-        for (char codePoint = 0; codePoint < 0xFFFF; codePoint++) {
-            final CharacterData data = createGlyph(codePoint, 0, parameter, stroker);
-            if(data != null) {
-                glyphs.add(data);
-                if(--remaining == 0) break;
+        if(parameter.codePoints == null) {
+            for (int codePoint = 0; codePoint < 0x10FFFF; codePoint++) {
+                createGlyph(codePoint, parameter, stroker, glyphs);
+            }
+        } else {
+            parameter.codePoints.add(0);
+            parameter.codePoints.add(' ');
+            for(final IntSet.IntSetIterator it = parameter.codePoints.iterator();it.hasNext;){
+                createGlyph(it.next(), parameter, stroker, glyphs);
             }
         }
+
 
         glyphs.sort();
 
@@ -138,7 +143,7 @@ public class FreeTypePacker {
             int totalSize = (int)Math.ceil(Math.sqrt(totalSize2 * waste));
             int size = MathUtils.nextPowerOfTwo(totalSize);
             if (size > 4096) size = 4096;
-            System.out.println("Will use size: "+size);
+            //System.out.println("Will use size: "+size);
             textureSize = size;
         }
 
@@ -151,7 +156,7 @@ public class FreeTypePacker {
             packer.getTransparentColor().a = 0;
         }
 
-        System.out.println("Generated "+glyphs.size+" glyphs");
+        //System.out.println("Generated "+glyphs.size+" glyphs");
 
         for (CharacterData glyph : glyphs) {
             if (glyph.pixmap.getHeight() != 0 && glyph.pixmap.getWidth() != 0) {
@@ -163,7 +168,7 @@ public class FreeTypePacker {
         final int topToBaseline = lineHeight + descender;
 
         final StringBuilder fnt = new StringBuilder();
-        fnt.append("info face=\"").append(name).append("\" size=").append(parameter.size)
+        fnt.append("info face=\"").append(parameter.fontName).append("\" size=").append(parameter.size)
                 .append(" bold=0 italic=0 charset=\"\" unicode=1 stretchH=100 smooth=1 aa=1 padding=1,1,1,1 spacing=1,1 outline=0");
         fnt.append('\n');
         fnt.append("common lineHeight=").append(lineHeight).append(" base=").append(topToBaseline).append(" scaleW=")
@@ -171,13 +176,17 @@ public class FreeTypePacker {
                 .append(" packed=0 alphaChnl=0 redChnl=4 greenChnl=4 blueChnl=4");
         fnt.append('\n');
 
-        int pageNo = 0;
-        for (PixmapPacker.Page page : packer.getPages()) {
-            final FileHandle file = outputFolder.child(name + pageNo + ".png");
-            PixmapIO.writePNG(file, page.getPixmap());
-            fnt.append("page id=").append(pageNo).append(" file=\"").append(file.name()).append("\"");
-            fnt.append('\n');
-            pageNo++;
+        {
+            int pageNo = 0;
+            final boolean addPageNumbers = packer.getPages().size > 1;
+            for (PixmapPacker.Page page : packer.getPages()) {
+                final FileHandle file = outputFolder.child(parameter.fontName + (addPageNumbers ? "_"+pageNo:"") + ".png");
+                resultFiles.add(file);
+                PixmapIO.writePNG(file, page.getPixmap());
+                fnt.append("page id=").append(pageNo).append(" file=\"").append(file.name()).append("\"");
+                fnt.append('\n');
+                pageNo++;
+            }
         }
 
         for (CharacterData glyph : glyphs) {
@@ -257,17 +266,25 @@ public class FreeTypePacker {
             }
         }
 
-        outputFolder.child(name+".fnt").writeString(fnt.toString(), false, "UTF-8");
+        final FileHandle fntFile = outputFolder.child(parameter.fontName + ".fnt");
+        fntFile.writeString(fnt.toString(), false, "UTF-8");
+        resultFiles.add(fntFile);
 
         if (stroker != null) stroker.dispose();
+        return resultFiles;
+    }
+
+    private void createGlyph(int codePoint, FreeTypeFontParameter parameter, FreeType.Stroker stroker, Array<CharacterData> glyphs) {
+        final int glyphIndex = face.getCharIndex(codePoint);
+        if(glyphIndex == 0 && codePoint != 0) return;
+        final CharacterData data = createGlyph(codePoint, glyphIndex, parameter, stroker);
+        if(data != null) {
+            glyphs.add(data);
+        }
     }
 
     /** @return null if glyph was not found. */
-    CharacterData createGlyph (char c, int glyphIndexForce, FreeTypeFontParameter parameter, FreeType.Stroker stroker) {
-        final int glyphIndex = glyphIndexForce != 0 ? glyphIndexForce : face.getCharIndex(c);
-        boolean missing = glyphIndex == 0 && c != 0;
-        if (missing) return null;
-
+    CharacterData createGlyph (int codePoint, int glyphIndex, FreeTypeFontParameter parameter, FreeType.Stroker stroker) {
         if (!face.loadGlyph(glyphIndex, parameter.loadingFlags)) return null;
 
         FreeType.GlyphSlot slot = face.getGlyph();
@@ -276,7 +293,7 @@ public class FreeTypePacker {
             mainGlyph.toBitmap(parameter.mono ? FreeType.FT_RENDER_MODE_MONO : FreeType.FT_RENDER_MODE_NORMAL);
         } catch (GdxRuntimeException e) {
             mainGlyph.dispose();
-            Gdx.app.log("FreeTypeFontGenerator", "Couldn't render char: " + c);
+            Gdx.app.log("FreeTypeFontGenerator", "Couldn't render char: " + codePoint);
             return null;
         }
         FreeType.Bitmap mainBitmap = mainGlyph.getBitmap();
@@ -345,7 +362,7 @@ public class FreeTypePacker {
             }
         }
 
-        final CharacterData data = new CharacterData(glyphIndex, c);
+        final CharacterData data = new CharacterData(glyphIndex, codePoint);
         data.pixmap = mainPixmap;
         data.advanceX = FreeType.toInt(slot.getAdvanceX());
         data.offsetX = mainGlyph.getLeft();
@@ -356,9 +373,18 @@ public class FreeTypePacker {
         return data;
     }
 
+    public void dispose(){
+        face.dispose();
+        library.dispose();
+    }
+
     public static class FreeTypeFontParameter {
+        /** Font name, used for output */
+        public String fontName;
         /** The size in pixels */
         public int size = 16;
+        /** Code-points to include, by default null which means to add all present. */
+        public IntSet codePoints = null;
         /** If true, font smoothing is disabled. */
         public boolean mono;
         /** Loading flags used for {@link com.badlogic.gdx.graphics.g2d.freetype.FreeType.Face#loadGlyph(int, int)}. */
@@ -385,5 +411,16 @@ public class FreeTypePacker {
         public Color shadowColor = new Color(0, 0, 0, 0.75f);
         /** Whether the font should include kerning */
         public boolean kerning = true;
+    }
+
+    public static File[] pack(File fontFile, File outputDirectory, FreeTypeFontParameter parameter) {
+        final FreeTypePacker packer = new FreeTypePacker(new FileHandle(fontFile));
+        final Array<FileHandle> generatedFiles = packer.generate(parameter, new FileHandle(outputDirectory));
+        packer.dispose();
+        File[] result = new File[generatedFiles.size];
+        for (int i = 0; i < generatedFiles.size; i++) {
+            result[i] = generatedFiles.get(i).file();
+        }
+        return result;
     }
 }

@@ -25,7 +25,7 @@ object UsingPackedResourcesTest extends App {
       val table = new Table(skin)
       table.add("The COG:","font-default",Color.WHITE).padRight(10f)
       table.add(new Image(skin.getDrawable("cog"))).size(40f,40f).row()
-      table.add(new TextButton("Sphinx of black quartz, judge my vow.",skin, "button")).colspan(2).row()
+      table.add(new TextButton("Sphinx of black quartz, judge my vow.", skin, "button")).colspan(2).row()
       table.setFillParent(true)
       stage.addActor(table)
 

@@ -26,8 +26,9 @@ public class FreeTypePackerTest {
     public static void main(String[] args){
         GdxNativesLoader.load();
 
-        final FreeTypePacker packer = new FreeTypePacker("FontName",new FileHandle(new File("testresources/UISkin.pack/goudy-bookletter-1911.32.from glyphs.ignore.ttf")));
+        final FreeTypePacker packer = new FreeTypePacker(new FileHandle(new File("testresources/UISkin.pack/goudy-bookletter-1911.32.from glyphs.ttf")));
         final FreeTypePacker.FreeTypeFontParameter parameter = new FreeTypePacker.FreeTypeFontParameter();
+        parameter.fontName = "FontName";
         parameter.size = 100;
         parameter.borderWidth = 2;
         parameter.borderColor = Color.BLUE;
