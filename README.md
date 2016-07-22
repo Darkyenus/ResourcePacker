@@ -54,15 +54,11 @@ https://developer.apple.com/library/ios/qa/qa1686/_index.html
 Rasterizes .ttf fonts. Font must have .N. flag where N is font size in pixels.
 
 **Flags**:
-* `p[t|b|l|r]<N>` - Adds padding around every glyph (Top, Bottom, Left, Right or if no letter then everywhere)
 * `<N>` - size - mandatory
-* `<S>-<E>` - adds all codepoints from S to E, inclusive
-* `from <F>` - adds all codepoints from file F, file must be only letters and in same directory, no extension either. UTF-8 encoding is assumed
+* `<S>-<E>` - adds all codepoints from S to E, inclusive. Missing glyphs are not added.
 * `bg#RRGGBBAA` - background color, default is transparent
 * `fg#RRGGBBAA` - foreground color, default is white
-* `native` - use native rendering
-* `ascii` - add all ascii glyphs (codepoints 32 through 255)
-* `nehe` - add all nehe glyphs (codepoints 32 through 128)
+* `outline <W> RRGGBBAA [straight]` - add outline of width W and specified color, add "straight" for sharp/mitered edges
 
 When no glyphs are specified, ASCII glyphs are added.
 
