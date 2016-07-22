@@ -14,13 +14,13 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.badlogic.gdx.tools.texturepacker;
+package darkyenus.resourcepacker.util.tools.texturepacker;
 
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.tools.texturepacker.TexturePacker.Packer;
-import com.badlogic.gdx.tools.texturepacker.TexturePacker.Page;
-import com.badlogic.gdx.tools.texturepacker.TexturePacker.Rect;
-import com.badlogic.gdx.tools.texturepacker.TexturePacker.Settings;
+import darkyenus.resourcepacker.util.tools.texturepacker.TexturePacker.Packer;
+import darkyenus.resourcepacker.util.tools.texturepacker.TexturePacker.Page;
+import darkyenus.resourcepacker.util.tools.texturepacker.TexturePacker.Rect;
+import darkyenus.resourcepacker.util.tools.texturepacker.TexturePacker.Settings;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Sort;
 

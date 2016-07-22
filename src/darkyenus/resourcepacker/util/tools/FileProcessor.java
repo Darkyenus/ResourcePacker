@@ -1,4 +1,4 @@
-/*******************************************************************************
+/* ******************************************************************************
  * Copyright 2011 See AUTHORS file.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- ******************************************************************************/
+ * *****************************************************************************/
 
-package com.badlogic.gdx.tools;
+package darkyenus.resourcepacker.util.tools;
 
 import com.badlogic.gdx.utils.Array;
 
@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
  * the callbacks have the original file, the output directory, and the output file. If {@link #setFlattenOutput(boolean)} is
  * false, the output will match the directory structure of the input.
  * @author Nathan Sweet */
+@SuppressWarnings("unused")
 public class FileProcessor {
 	FilenameFilter inputFilter;
 	Comparator<File> comparator = new Comparator<File>() {
@@ -38,9 +39,9 @@ public class FileProcessor {
 			return o1.getName().compareTo(o2.getName());
 		}
 	};
-	Array<Pattern> inputRegex = new Array();
+	Array<Pattern> inputRegex = new Array<>();
 	String outputSuffix;
-	ArrayList<Entry> outputFiles = new ArrayList();
+	ArrayList<Entry> outputFiles = new ArrayList<>();
 	boolean recursive = true;
 	boolean flattenOutput;
 
@@ -128,10 +129,10 @@ public class FileProcessor {
 		if (outputRoot == null) outputRoot = new File("");
 		outputFiles.clear();
 
-		LinkedHashMap<File, ArrayList<Entry>> dirToEntries = new LinkedHashMap();
+		LinkedHashMap<File, ArrayList<Entry>> dirToEntries = new LinkedHashMap<>();
 		process(files, outputRoot, outputRoot, dirToEntries, 0);
 
-		ArrayList<Entry> allEntries = new ArrayList();
+		ArrayList<Entry> allEntries = new ArrayList<>();
 		for (java.util.Map.Entry<File, ArrayList<Entry>> mapEntry : dirToEntries.entrySet()) {
 			ArrayList<Entry> dirEntries = mapEntry.getValue();
 			if (comparator != null) Collections.sort(dirEntries, entryComparator);
@@ -178,7 +179,7 @@ public class FileProcessor {
 			File dir = file.getParentFile();
 			ArrayList<Entry> entries = dirToEntries.get(dir);
 			if (entries == null) {
-				entries = new ArrayList();
+				entries = new ArrayList<>();
 				dirToEntries.put(dir, entries);
 			}
 		}
@@ -190,7 +191,7 @@ public class FileProcessor {
 					for (Pattern pattern : inputRegex) {
 						if (pattern.matcher(file.getName()).matches()) {
 							found = true;
-							continue;
+							break;
 						}
 					}
 					if (!found) continue;
@@ -216,8 +217,8 @@ public class FileProcessor {
 				dirToEntries.get(dir).add(entry);
 			}
 			if (recursive && file.isDirectory()) {
-				File subdir = outputDir.getPath().length() == 0 ? new File(file.getName()) : new File(outputDir, file.getName());
-				process(file.listFiles(inputFilter), outputRoot, subdir, dirToEntries, depth + 1);
+				File subDir = outputDir.getPath().length() == 0 ? new File(file.getName()) : new File(outputDir, file.getName());
+				process(file.listFiles(inputFilter), outputRoot, subDir, dirToEntries, depth + 1);
 			}
 		}
 	}
@@ -237,7 +238,7 @@ public class FileProcessor {
 	}
 
 	/** @author Nathan Sweet */
-	static public class Entry {
+	public static final class Entry {
 		public File inputFile;
 		/** May be null. */
 		public File outputDir;

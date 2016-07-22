@@ -1,4 +1,4 @@
-/*******************************************************************************
+/* ******************************************************************************
  * Copyright 2011 See AUTHORS file.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,11 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.badlogic.gdx.tools.texturepacker;
+package darkyenus.resourcepacker.util.tools.texturepacker;
 
-import com.badlogic.gdx.tools.FileProcessor;
-import com.badlogic.gdx.tools.texturepacker.TexturePacker.Settings;
+import darkyenus.resourcepacker.util.tools.FileProcessor;
+import darkyenus.resourcepacker.util.tools.FileProcessor.Entry;//NEEDED FOR BUGGY SCALADOC
+import darkyenus.resourcepacker.util.tools.texturepacker.TexturePacker.Settings;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonReader;
@@ -32,13 +33,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** @author Nathan Sweet */
+@SuppressWarnings("unused")
 public class TexturePackerFileProcessor extends FileProcessor {
 	private final Settings defaultSettings;
-	private ObjectMap<File, Settings> dirToSettings = new ObjectMap();
+	private ObjectMap<File, Settings> dirToSettings = new ObjectMap<>();
 	private Json json = new Json();
 	private String packFileName;
 	private File root;
-	ArrayList<File> ignoreDirs = new ArrayList();
+	ArrayList<File> ignoreDirs = new ArrayList<>();
 
 	public TexturePackerFileProcessor () {
 		this(new Settings(), "pack.atlas");
@@ -59,7 +61,7 @@ public class TexturePackerFileProcessor extends FileProcessor {
 		root = inputFile;
 
 		// Collect pack.json setting files.
-		final ArrayList<File> settingsFiles = new ArrayList();
+		final ArrayList<File> settingsFiles = new ArrayList<>();
 		FileProcessor settingsProcessor = new FileProcessor() {
 			protected void processFile (Entry inputFile) throws Exception {
 				settingsFiles.add(inputFile.inputFile);
@@ -146,12 +148,12 @@ public class TexturePackerFileProcessor extends FileProcessor {
 		if (ignoreDirs.contains(inputDir.inputFile)) return;
 
 		// Find first parent with settings, or use defaults.
-		Settings settings = null;
+		Settings settings;
 		File parent = inputDir.inputFile;
 		while (true) {
 			settings = dirToSettings.get(parent);
 			if (settings != null) break;
-			if (parent == null || parent.equals(root)) break;
+			if (parent.equals(root)) break;
 			parent = parent.getParentFile();
 		}
 		if (settings == null) settings = defaultSettings;

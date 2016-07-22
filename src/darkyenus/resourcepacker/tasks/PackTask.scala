@@ -4,7 +4,7 @@ import java.awt.Color
 import java.io.FileReader
 import javax.imageio.ImageIO
 
-import com.badlogic.gdx.tools.texturepacker.TexturePacker
+import darkyenus.resourcepacker.util.tools.texturepacker.TexturePacker
 import com.badlogic.gdx.utils.{Json, JsonReader}
 import com.esotericsoftware.minlog.Log
 import com.google.common.io.Files

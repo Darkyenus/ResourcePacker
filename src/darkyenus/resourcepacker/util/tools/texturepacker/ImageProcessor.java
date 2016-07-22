@@ -14,11 +14,11 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.badlogic.gdx.tools.texturepacker;
+package darkyenus.resourcepacker.util.tools.texturepacker;
 
-import com.badlogic.gdx.tools.texturepacker.TexturePacker.Alias;
-import com.badlogic.gdx.tools.texturepacker.TexturePacker.Rect;
-import com.badlogic.gdx.tools.texturepacker.TexturePacker.Settings;
+import darkyenus.resourcepacker.util.tools.texturepacker.TexturePacker.Alias;
+import darkyenus.resourcepacker.util.tools.texturepacker.TexturePacker.Rect;
+import darkyenus.resourcepacker.util.tools.texturepacker.TexturePacker.Settings;
 import com.badlogic.gdx.utils.Array;
 
 import javax.imageio.ImageIO;
