@@ -148,7 +148,7 @@ object CreateIOSIconTask extends Task {
             val singleIconFile = new ResourceFile(file.file, file.parent) {
               override val name: String = filename
               override val extension: String = RasterizeTask.SVGExtension
-              override val flags: Array[String] = (size+"x"+size) +: transitiveFlags
+              override val flags: Array[String] = (size+"x"+size) +: "rasterize" +: transitiveFlags
             }
 
             Log.debug(Name, "Icon file "+singleIconFile+" created")

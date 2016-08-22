@@ -2,7 +2,7 @@ organization := "com.github.Darkyenus" //Default jitpack organization
 
 name := "ResourcePacker"
 
-version := "1.8"
+version := "1.9-SNAPSHOT"
 
 scalaVersion := "2.10.4"
 
