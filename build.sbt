@@ -2,9 +2,9 @@ organization := "com.github.Darkyenus" //Default jitpack organization
 
 name := "ResourcePacker"
 
-version := "1.9-SNAPSHOT"
+version := "1.10-SNAPSHOT"
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.11.7"
 
 startYear := Some(2014)
 
@@ -12,7 +12,7 @@ scalacOptions ++= Seq("-deprecation","-feature","-target:jvm-1.7")
 
 javacOptions ++= Seq("-source","7","-target","7")
 
-val gdxVersion = "1.9.3"
+val gdxVersion = "1.9.5"
 
 scalaSource in Compile := baseDirectory.value / "src"
 

@@ -1,6 +1,7 @@
 package darkyenus.resourcepacker.tasks
 
-import java.io.{File, FileOutputStream}
+import java.io.{File, FileNotFoundException, FileOutputStream}
+import java.net.URL
 
 import com.esotericsoftware.minlog.Log
 import com.google.common.base.Charsets
@@ -9,6 +10,7 @@ import darkyenus.resourcepacker.{ResourceFile, Task}
 import org.lwjgl.system.Platform
 
 import scala.collection.convert.wrapAll._
+import scala.io.Source
 import scala.util.matching.Regex
 
 /**
@@ -32,13 +34,13 @@ import scala.util.matching.Regex
  */
 object ConvertModelsTask extends Task {
 
-  private val MtlLibRegex = "mtllib (\\w(?:\\w|/)+\\.mtl)".r
-  private val TextureRegex = "map_Kd (\\w(?:\\w|/)+\\.(?:png|jpg|jpeg))".r
+  private val MtlLibRegex = "mtllib ((?:\\w|/|-|\\.)+\\w\\.mtl)".r
+  private val TextureRegex = "map_Kd ((?:\\w|/|-|\\.)+\\w\\.(?:png|jpg|jpeg))".r
 
   private def findDependentFiles(file: ResourceFile, regex: Regex): Iterable[ResourceFile] = {
     Files.readLines(file.file, Charsets.UTF_8).collect[Option[ResourceFile], Iterable[Option[ResourceFile]]] {
-      case regex(mtlFileName) =>
-        val parts = mtlFileName.split('/')
+      case regex(dependencyFileName) =>
+        val parts = dependencyFileName.split('/')
         var directory = file.parent
         var continue = true
         for (subdirectory <- parts.dropRight(1) if continue) {
@@ -46,16 +48,16 @@ object ConvertModelsTask extends Task {
             case Some(newDirectory) =>
               directory = newDirectory
             case None =>
-              Log.error(Name, "File references non-existing file. " + file + " " + mtlFileName)
+              Log.error(Name, "File references non-existing file. " + file + " " + dependencyFileName)
               continue = false
           }
         }
         if (continue) {
           directory.getChildFile(parts.last) match {
-            case Some(mtlFile) =>
-              Some(mtlFile)
+            case Some(dependencyFile) =>
+              Some(dependencyFile)
             case None =>
-              Log.error(Name, "File references non-existing file. " + file + " " + mtlFileName)
+              Log.error(Name, "File references non-existing file. " + file + " " + dependencyFileName)
               None
           }
         } else {
@@ -65,13 +67,13 @@ object ConvertModelsTask extends Task {
   }
 
   private def removeObjFile(file: ResourceFile) {
-    file.removeFromParent()
     for (mtlFile <- findDependentFiles(file, MtlLibRegex)) {
-      mtlFile.parent.removeChild(mtlFile)
       for (textureFile <- findDependentFiles(mtlFile, TextureRegex)) {
         textureFile.parent.removeChild(textureFile)
       }
+      mtlFile.parent.removeChild(mtlFile)
     }
+    file.removeFromParent()
   }
 
   private def copyObjAndDepsWithoutSpaces(file: ResourceFile) {
@@ -128,11 +130,11 @@ object ConvertModelsTask extends Task {
 
     Platform.get() match {
       case Platform.MACOSX =>
-        executeCommand(postCommandOptions)
+        executeCommand(postCommandOptions, linkfbxsdk = true)
       case Platform.WINDOWS =>
-        Log.error(Name, "Fbx-conv on Windows not yet supported.")
+        executeCommand(postCommandOptions, linkfbxsdk = false)
       case Platform.LINUX =>
-        Log.error(Name, "Fbx-conv on Linux not yet supported.")
+        executeCommand(postCommandOptions, linkfbxsdk = true)
       case unk =>
         Log.error(Name, "Unknown platform reported by LWJGL: " + unk)
     }
@@ -174,12 +176,23 @@ object ConvertModelsTask extends Task {
 
 import scala.sys.process.Process
 
-  private def executeCommand(postCommand: String) {
+  private def executeCommand(postCommand: String, linkfbxsdk: Boolean) {
     val command = executable.getCanonicalPath + postCommand
     Log.info(Name, "Executing external command. " + command)
-    val processResult = Process(command).!
+
+    val processResult = if (linkfbxsdk) {
+      Process(command, None, "LD_LIBRARY_PATH" -> executable.getParent).!
+    } else {
+      Process(command).!
+    }
+
     if (processResult == 0) {
       Log.info(Name, "External command terminated normally.")
+    } else if (processResult == 127) { // Could not link fbx sdk
+      Log.error(Name, "Missing FBX SDK or it is not linked properly.")
+      if (Platform.get() == Platform.WINDOWS) {
+        Log.info(Name, "Try downloading and installing manually. From: http://www.microsoft.com/en-us/download/confirmation.aspx?id=5555")
+      }
     } else {
       Log.warn(Name, "External command terminated with unusual code. " + processResult)
     }
