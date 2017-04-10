@@ -12,11 +12,11 @@ scalacOptions ++= Seq("-deprecation","-feature","-target:jvm-1.7")
 
 javacOptions ++= Seq("-source","7","-target","7")
 
-val gdxVersion = "1.9.5"
+val gdxVersion = "1.9.6"
 
-scalaSource in Compile := baseDirectory.value / "src"
+crossPaths := false
 
-resourceDirectory in Compile := baseDirectory.value / "resources"
+autoScalaLibrary := false
 
 libraryDependencies ++= Seq(
 	"com.badlogicgames.gdx" % "gdx" % gdxVersion,
@@ -37,7 +37,3 @@ fork in Test := true
 javacOptions += "-g"
 
 javaOptions in Test += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
-
-scalaSource in Test := baseDirectory.value / "testsrc"
-
-resourceDirectory in Test := baseDirectory.value / "testresources"
