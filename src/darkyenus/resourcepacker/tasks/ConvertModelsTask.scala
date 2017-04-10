@@ -1,7 +1,6 @@
 package darkyenus.resourcepacker.tasks
 
-import java.io.{File, FileNotFoundException, FileOutputStream}
-import java.net.URL
+import java.io.{File, FileOutputStream}
 
 import com.esotericsoftware.minlog.Log
 import com.google.common.base.Charsets
@@ -10,7 +9,6 @@ import darkyenus.resourcepacker.{ResourceFile, Task}
 import org.lwjgl.system.Platform
 
 import scala.collection.convert.wrapAll._
-import scala.io.Source
 import scala.util.matching.Regex
 
 /**
@@ -109,7 +107,12 @@ object ConvertModelsTask extends Task {
     val convertTo = modelFile.flags.collectFirst {
       case ConversionOptionsRegex(format) =>
         format
-    }.getOrElse("g3db")
+    }.orNull
+
+    if (convertTo == null) {
+      return false
+    }
+
 
     if (isObj) copyObjAndDepsWithoutSpaces(modelFile)
 
@@ -119,9 +122,9 @@ object ConvertModelsTask extends Task {
     val outputFile = new File(newFolder(), modelFile.name + outputFilePostfix)
     val outputFilePath = outputFile.getCanonicalPath
 
-    val postCommandOptions = s" -o ${convertTo.toUpperCase} $options $inputFilePath $outputFilePath"
+    val args = Seq("-o", convertTo.toUpperCase) :+ options :+ inputFilePath :+ outputFilePath
 
-    Log.info(Name, "Converting " + modelFile.extension + " file. " + modelFile + " " + postCommandOptions + " " + options + " " + modelFile.flags.addString(new StringBuilder, "|").toString())
+    Log.info(Name, "Converting " + modelFile.extension + " file. " + modelFile + " " + args + " " + options.mkString(" ") + " " + modelFile.flags.addString(new StringBuilder, "|").toString())
 
     if (isObj) removeObjFile(modelFile)
     else modelFile.removeFromParent()
@@ -130,11 +133,11 @@ object ConvertModelsTask extends Task {
 
     Platform.get() match {
       case Platform.MACOSX =>
-        executeCommand(postCommandOptions, linkfbxsdk = true)
+        executeCommand(args, linkfbxsdk = true)
       case Platform.WINDOWS =>
-        executeCommand(postCommandOptions, linkfbxsdk = false)
+        executeCommand(args, linkfbxsdk = false)
       case Platform.LINUX =>
-        executeCommand(postCommandOptions, linkfbxsdk = true)
+        executeCommand(args, linkfbxsdk = true)
       case unk =>
         Log.error(Name, "Unknown platform reported by LWJGL: " + unk)
     }
@@ -174,17 +177,22 @@ object ConvertModelsTask extends Task {
     result
   }
 
-import scala.sys.process.Process
-
-  private def executeCommand(postCommand: String, linkfbxsdk: Boolean) {
-    val command = executable.getCanonicalPath + postCommand
+  private def executeCommand(arguments: Seq[String], linkfbxsdk: Boolean) {
+    val command = executable.getCanonicalPath
     Log.info(Name, "Executing external command. " + command)
 
-    val processResult = if (linkfbxsdk) {
-      Process(command, None, "LD_LIBRARY_PATH" -> executable.getParent).!
-    } else {
-      Process(command).!
+    val processBuilder = new ProcessBuilder()
+      .command(command +: arguments)
+
+    if (linkfbxsdk) {
+      processBuilder.environment().put("LD_LIBRARY_PATH", executable.getParentFile.getCanonicalPath)
     }
+
+    processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT)
+    processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT)
+
+    val process = processBuilder.start()
+    val processResult = process.waitFor()
 
     if (processResult == 0) {
       Log.info(Name, "External command terminated normally.")

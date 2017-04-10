@@ -35,12 +35,12 @@ object CreateIOSIconTask extends Task {
 
   type IconClass = ((Iterable[String] => Boolean), Iterable[IconType])
 
-  val UniversalFlag = "iOSIcon".toLowerCase
-  val iPhoneFlag = "iPhoneIcon".toLowerCase
-  val iPadFlag = "iPadIcon".toLowerCase
+  val UniversalFlag: String = "iOSIcon".toLowerCase
+  val iPhoneFlag: String = "iPhoneIcon".toLowerCase
+  val iPadFlag: String = "iPadIcon".toLowerCase
 
-  val SmallFlagAppendage = "Small".toLowerCase
-  val ArtworkFlagAppendage = "Artwork".toLowerCase
+  val SmallFlagAppendage: String = "Small".toLowerCase
+  val ArtworkFlagAppendage: String = "Artwork".toLowerCase
 
   val ArtworkSizes:Array[IconType] = Array(
     (512, "iTunesArtwork", true),
