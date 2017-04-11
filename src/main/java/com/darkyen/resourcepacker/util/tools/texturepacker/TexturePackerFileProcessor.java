@@ -14,11 +14,10 @@
  * limitations under the License.
  ******************************************************************************/
 
-package darkyenus.resourcepacker.util.tools.texturepacker;
+package com.darkyen.resourcepacker.util.tools.texturepacker;
 
-import darkyenus.resourcepacker.util.tools.FileProcessor;
-import darkyenus.resourcepacker.util.tools.FileProcessor.Entry;//NEEDED FOR BUGGY SCALADOC
-import darkyenus.resourcepacker.util.tools.texturepacker.TexturePacker.Settings;
+import com.darkyen.resourcepacker.util.tools.FileProcessor;
+import com.darkyen.resourcepacker.util.tools.texturepacker.TexturePacker.Settings;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonReader;

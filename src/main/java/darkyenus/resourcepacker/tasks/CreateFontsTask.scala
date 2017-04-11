@@ -2,10 +2,11 @@ package darkyenus.resourcepacker.tasks
 
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.utils.IntSet
+import com.darkyen.resourcepacker.util.FreeTypePacker
 import com.esotericsoftware.minlog.Log
 import com.google.common.io.Files
-import darkyenus.resourcepacker.util.FreeTypePacker.FreeTypeFontParameter
-import darkyenus.resourcepacker.util.{FreeTypePacker, ImageUtil}
+import com.darkyen.resourcepacker.util.FreeTypePacker.FreeTypeFontParameter
+import darkyenus.resourcepacker.util.ImageUtil
 import darkyenus.resourcepacker.{ResourceFile, Task}
 
 /**

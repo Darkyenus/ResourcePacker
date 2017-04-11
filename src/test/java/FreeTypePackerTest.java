@@ -15,7 +15,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.GdxNativesLoader;
 import com.badlogic.gdx.utils.StringBuilder;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import darkyenus.resourcepacker.util.FreeTypePacker;
+import com.darkyen.resourcepacker.util.FreeTypePacker;
 
 import java.io.File;
 

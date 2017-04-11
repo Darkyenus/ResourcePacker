@@ -1,3 +1,4 @@
+
 organization := "com.github.Darkyenus" //Default jitpack organization
 
 name := "ResourcePacker"
@@ -17,6 +18,10 @@ val gdxVersion = "1.9.6"
 crossPaths := false
 
 autoScalaLibrary := false
+
+kotlinVersion := "1.1.1"
+
+kotlinLib("stdlib")
 
 libraryDependencies ++= Seq(
 	"com.badlogicgames.gdx" % "gdx" % gdxVersion,

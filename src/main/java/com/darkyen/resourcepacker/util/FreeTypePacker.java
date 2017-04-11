@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * *****************************************************************************/
-package darkyenus.resourcepacker.util;
+package com.darkyen.resourcepacker.util;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;

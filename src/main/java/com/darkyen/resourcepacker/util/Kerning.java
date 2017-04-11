@@ -14,7 +14,7 @@
  * limitations under the License.
  ******************************************************************************/
 
-package darkyenus.resourcepacker.util;
+package com.darkyen.resourcepacker.util;
 
 import com.badlogic.gdx.utils.IntArray;
 

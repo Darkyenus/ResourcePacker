@@ -14,9 +14,9 @@
  * limitations under the License.
  ******************************************************************************/
 
-package darkyenus.resourcepacker.util.tools.texturepacker;
+package com.darkyen.resourcepacker.util.tools.texturepacker;
 
-import darkyenus.resourcepacker.util.tools.texturepacker.ColorBleedEffect.Mask.MaskIterator;
+import com.darkyen.resourcepacker.util.tools.texturepacker.ColorBleedEffect.Mask.MaskIterator;
 
 import java.awt.image.BufferedImage;
 import java.util.NoSuchElementException;

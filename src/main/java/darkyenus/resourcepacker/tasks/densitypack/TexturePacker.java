@@ -24,7 +24,7 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas.TextureAtlasData;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas.TextureAtlasData.Region;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
-import darkyenus.resourcepacker.util.tools.texturepacker.ColorBleedEffect;
+import com.darkyen.resourcepacker.util.tools.texturepacker.ColorBleedEffect;
 import com.badlogic.gdx.utils.*;
 import com.google.common.io.Files;
 import org.apache.batik.transcoder.TranscodingHints;

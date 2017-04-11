@@ -14,7 +14,7 @@
  * limitations under the License.
  ******************************************************************************/
 
-package darkyenus.resourcepacker.util.tools.texturepacker;
+package com.darkyen.resourcepacker.util.tools.texturepacker;
 
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas.TextureAtlasData;
