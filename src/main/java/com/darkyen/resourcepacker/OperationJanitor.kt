@@ -14,7 +14,7 @@ class OperationJanitor(private val workingRootProvider: WorkingRootProvider) {
 
     val workingRoot = workingRootProvider.getTemporaryRoot(this)
 
-    fun createTempFile(taskName: String, fileName:String, file: ResourceFile, extension: String?): File {
+    fun createTempFile(taskName: String, fileName:String, file: Resource.ResourceFile, extension: String?): File {
         val sb = StringBuilder()
         var result: File
         do {

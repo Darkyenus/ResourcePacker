@@ -1,5 +1,6 @@
 package com.darkyen.resourcepacker
 
+import com.darkyen.resourcepacker.tasks.DefaultTasks
 import com.esotericsoftware.minlog.Log
 import java.io.File
 
@@ -13,12 +14,12 @@ class PackingOperation(val from: File, val to: File,
                        val tasks: List<Task> = DefaultTasks,
                        val workingRootProvider: WorkingRootProvider = TemporaryWorkingRootProvider) : ()->Unit {
 
-    private fun createTree(root: File): ResourceDirectory? {
+    private fun createTree(root: File): Resource.ResourceDirectory? {
         if (!root.isDirectory) {
             Log.error("ResourcePacker", "${root.canonicalPath} is not a directory.")
             return null
         }
-        val result = ResourceDirectory(root, null)
+        val result = Resource.ResourceDirectory(root, null)
         result.parent = result
         result.create()
         return result
@@ -31,7 +32,7 @@ class PackingOperation(val from: File, val to: File,
         }
     }
 
-    private fun logVirtualTreeAfter(after: Task, tree: ResourceDirectory) {
+    private fun logVirtualTreeAfter(after: Task, tree: Resource.ResourceDirectory) {
         if (Log.DEBUG) {
             Log.debug("PackingOperation", "After running " + after.Name + ", virtual filesystem looks like this:")
             val sb = StringBuilder()

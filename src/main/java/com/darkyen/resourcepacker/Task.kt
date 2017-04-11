@@ -32,7 +32,7 @@ abstract class Task {
      *
      * @return non existent file, ready to be created
      */
-    fun newFile(basedOn: ResourceFile, extension: String? = null): File {
+    fun newFile(basedOn: Resource.ResourceFile, extension: String? = null): File {
         return janitor.createTempFile(Name, basedOn.name, basedOn, extension)
     }
 
@@ -43,7 +43,7 @@ abstract class Task {
      *
      * @return non existent file, ready to be created
      */
-    fun newFileNamed(basedOn: ResourceFile, fileName:String, extension: String? = null): File {
+    fun newFileNamed(basedOn: Resource.ResourceFile, fileName:String, extension: String? = null): File {
         return janitor.createTempFile(Name, fileName, basedOn, extension)
     }
 
@@ -70,25 +70,25 @@ abstract class Task {
     /**
      * Called before each run. Reset your internal state here (if you keep any).
      */
-    fun prepare() {}
+    open fun prepare() {}
 
     /** Do your work here.
      * Called once for each file remaining in virtual working filesystem, per run.
      * @return whether the operation did something or not */
-    fun operate(file: ResourceFile): Boolean = false
+    open fun operate(file: Resource.ResourceFile): Boolean = false
 
     /** Do your work here.
      * Called once for each directory remaining in virtual working filesystem, per run.
      * @return whether the operation did something or not */
-    fun operate(directory: ResourceDirectory): Boolean = false
+    open fun operate(directory: Resource.ResourceDirectory): Boolean = false
 
     /** Do your work here.
      * Called once for each run.
      * @return whether the operation did something or not
      */
-    fun operate(): Boolean = false
+    open fun operate(): Boolean = false
 
     /** Repeating tasks will run over and over until they don't success anymore on anything. */
-    val repeating = false
+    open val repeating = false
 
 }

@@ -4,14 +4,13 @@ import java.io.File
 import com.esotericsoftware.minlog.Log
 import com.google.common.io.Files
 
-typealias ResourceFile = Resource.ResourceFile
-typealias ResourceDirectory = Resource.ResourceDirectory
 /**
 
  */
+@Suppress("unused")
 sealed class Resource {
 
-    abstract var parent: ResourceDirectory?
+    abstract var parent: ResourceDirectory
 
     abstract val name: String
 
@@ -22,10 +21,12 @@ sealed class Resource {
     abstract fun applyTask(task: Task): Boolean
 
     fun removeFromParent() {
-        parent?.removeChild(this)
+        parent.removeChild(this)
     }
 
-    class ResourceDirectory(var directory: File, override var parent: ResourceDirectory?) : Resource() {
+    class ResourceDirectory(var directory: File, parent: ResourceDirectory?) : Resource() {
+
+        override var parent:ResourceDirectory = parent ?: this
 
         override val name:String
         val flags:List<String>
@@ -36,8 +37,8 @@ sealed class Resource {
             this.flags = parsedName.second
         }
 
-        private var childrenDirectories = HashSet<ResourceDirectory>()
-        private var childrenFiles = HashSet<ResourceFile>()
+        private val childrenDirectories = HashSet<ResourceDirectory>()
+        private val childrenFiles = HashSet<ResourceFile>()
 
         private val removedFileChildren = ArrayList<ResourceFile>()
         private val removedDirChildren = ArrayList<ResourceDirectory>()
@@ -81,6 +82,11 @@ sealed class Resource {
             result.addAll(childrenFiles)
             result.addAll(childrenDirectories)
             return result
+        }
+
+        inline fun forEachChild(action:(Resource)->Unit) {
+            files.forEach(action)
+            directories.forEach(action)
         }
 
         fun addChild(file: ResourceFile): ResourceFile {
@@ -221,9 +227,17 @@ sealed class Resource {
         }
     }
 
-    class ResourceFile(file: File, override var parent: ResourceDirectory?) : Resource() {
+    /**
+     * @property name Name without flags
+     */
+    class ResourceFile(
+            file: File,
+            override var parent: ResourceDirectory,
+            override val name:String,
+            val flags:List<String>,
+            val extension:String) : Resource() {
 
-        val file:File = file
+        var file:File = file
             get() {
                 if (!field.exists() || !field.isFile) {
                     error("This should not happen - given file does not exist. (${field.canonicalPath})")
@@ -231,21 +245,12 @@ sealed class Resource {
                 return field
             }
 
-        /** Name without flags */
-        override val name:String
+        private constructor(file: File, parent: ResourceDirectory, parseName:Triple<String, List<String>, String>) : this(file, parent, parseName.first, parseName.second, parseName.third)
+
+        constructor(file:File, parent: ResourceDirectory) : this(file, parent, parseName(file.name, false))
+
         /** Name without flags with extension */
-        val simpleName:String
-        val flags:List<String>
-        val extension:String
-
-        init {
-            val parsedName = parseName(file.name, false)
-            this.name = parsedName.first
-            this.flags = parsedName.second
-            this.extension = parsedName.third
-
-            this.simpleName = if (extension.isEmpty()) this.name else this.name + '.' + this.extension
-        }
+        val simpleName:String = if (extension.isEmpty()) this.name else this.name + '.' + this.extension
 
         override fun toString(): String {
             val builder = StringBuilder()
