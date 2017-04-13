@@ -1,5 +1,7 @@
 package com.darkyen.resourcepacker
 
+import com.badlogic.gdx.utils.Array as GdxArray
+import com.darkyen.resourcepacker.util.SnapshotArrayList
 import com.esotericsoftware.minlog.Log
 import com.google.common.io.Files
 import java.io.File
@@ -37,31 +39,31 @@ sealed class Resource {
             this.flags = parsedName.second
         }
 
-        private val childrenDirectories = HashSet<ResourceDirectory>()
-        private val childrenFiles = HashSet<ResourceFile>()
+        private val childDirectories = SnapshotArrayList(false, 16, ResourceDirectory::class.java)
+        private val childFiles = SnapshotArrayList(false, 16, ResourceFile::class.java)
 
-        private val removedFileChildren = ArrayList<ResourceFile>()
-        private val removedDirChildren = ArrayList<ResourceDirectory>()
+        private val removedChildDirectories = GdxArray<ResourceDirectory>(false, 16, ResourceDirectory::class.java)
+        private val removedChildFiles = GdxArray<ResourceFile>(false, 16, ResourceFile::class.java)
 
-        val files: Set<ResourceFile>
-            get() = childrenFiles
+        val files: List<ResourceFile>
+            get() = childFiles
 
-        val directories: Set<ResourceDirectory>
-            get() = childrenDirectories
+        val directories: List<ResourceDirectory>
+            get() = childDirectories
 
-        fun hasChildren(): Boolean = childrenDirectories.isNotEmpty() || childrenFiles.isNotEmpty()
+        fun hasChildren(): Boolean = childDirectories.isNotEmpty() || childFiles.isNotEmpty()
 
         fun removeChild(file: ResourceFile) {
-            if (childrenFiles.remove(file)) {
-                removedFileChildren.add(file)
+            if (childFiles.removeValue(file, true)) {
+                removedChildFiles.add(file)
             } else {
                 System.err.println("WARN: Removing file which doesn't exist: $file")
             }
         }
 
         fun removeChild(dir: ResourceDirectory) {
-            if (childrenDirectories.remove(dir)) {
-                removedDirChildren.add(dir)
+            if (childDirectories.removeValue(dir, true)) {
+                removedChildDirectories.add(dir)
             } else {
                 System.err.println("WARN: Removing directory which doesn't exist: $dir")
             }
@@ -79,8 +81,8 @@ sealed class Resource {
         @Deprecated("Too slow")
         fun children(): Set<Resource> {
             val result = HashSet<Resource>()
-            result.addAll(childrenFiles)
-            result.addAll(childrenDirectories)
+            result.addAll(childFiles)
+            result.addAll(childDirectories)
             return result
         }
 
@@ -90,13 +92,13 @@ sealed class Resource {
         }
 
         fun addChild(file: ResourceFile): ResourceFile {
-            childrenFiles.add(file)
+            childFiles.add(file)
             file.parent = this
             return file
         }
 
         fun addChild(file: ResourceDirectory): ResourceDirectory {
-            childrenDirectories.add(file)
+            childDirectories.add(file)
             file.parent = this
             return file
         }
@@ -114,11 +116,11 @@ sealed class Resource {
             if (!javaFile.name.startsWith('.') && (javaFile.isDirectory || javaFile.isFile)) {
                 if (javaFile.isFile) {
                     val file = ResourceFile(javaFile, this)
-                    childrenFiles.add(file)
+                    childFiles.add(file)
                     return file
                 } else {
                     val dir = ResourceDirectory(javaFile, this)
-                    childrenDirectories.add(dir)
+                    childDirectories.add(dir)
                     if (createStructure) {
                         dir.create()
                     }
@@ -141,15 +143,15 @@ sealed class Resource {
                 } else {
                     val newName = name.substring(0, dotIndex)
                     val extension = name.substring(dotIndex + 1).toLowerCase()
-                    return childrenFiles.find { it.name == newName && it.extension == extension } ?: removedFileChildren.find { it.name == newName && it.extension == extension }
+                    return childFiles.find { it.name == newName && it.extension == extension } ?: removedChildFiles.find { it.name == newName && it.extension == extension }
                 }
             } else {
-                return childrenFiles.find { it.name == name } ?: removedFileChildren.find { it.name == name }
+                return childFiles.find { it.name == name } ?: removedChildFiles.find { it.name == name }
             }
         }
 
         fun getChildDirectory(name: String): ResourceDirectory? {
-            return childrenDirectories.find { it.name == name } ?: removedDirChildren.find { it.name == name }
+            return childDirectories.find { it.name == name } ?: removedChildDirectories.find { it.name == name }
         }
 
         @Deprecated("TODO: Rename to something more meaningful")
@@ -177,16 +179,28 @@ sealed class Resource {
             if (task.operate(this)) {
                 wasSuccessful = true
             }
-            for (file in childrenFiles) {
-                if (file.applyTask(task)) {
+
+            val filesSnapshot = childFiles.begin()
+            val filesSize = (childFiles as GdxArray<ResourceFile>).size
+
+            val directoriesSnapshot = childDirectories.begin()
+            val directoriesSize = (childDirectories as GdxArray<ResourceDirectory>).size
+
+            for (i in 0..(filesSize - 1)) {
+                if (filesSnapshot[i].applyTask(task)) {
                     wasSuccessful = true
                 }
             }
-            for (dir in childrenDirectories) {
-                if (dir.applyTask(task)) {
+
+            for (i in 0..(directoriesSize-1)) {
+                if (directoriesSnapshot[i].applyTask(task)) {
                     wasSuccessful = true
                 }
             }
+
+            childFiles.end()
+            childDirectories.end()
+
             return wasSuccessful
         }
 
@@ -197,10 +211,10 @@ sealed class Resource {
                 result.mkdirs()
                 result
             }
-            for (file in childrenFiles) {
+            for (file in childFiles) {
                 file.copyYourself(myFolder)
             }
-            for (dir in childrenDirectories) {
+            for (dir in childDirectories) {
                 dir.copyYourself(myFolder, false)
             }
         }
@@ -214,12 +228,12 @@ sealed class Resource {
                 }
             }
 
-            for (file in childrenFiles.sortedBy { it.name }) {
+            for (file in childFiles.sortedBy { it.name }) {
                 appendLevel()
                 sb.append(file.name).append('.').append(file.extension).append('\n')
             }
 
-            for (directory in childrenDirectories.sortedBy { it.name }) {
+            for (directory in childDirectories.sortedBy { it.name }) {
                 appendLevel()
                 sb.append(directory.name).append('/').append('\n')
                 directory.toPrettyString(sb, level + 1)
@@ -247,7 +261,7 @@ sealed class Resource {
 
         private constructor(file: File, parent: ResourceDirectory, parseName: Triple<String, List<String>, String>) : this(file, parent, parseName.first, parseName.second, parseName.third)
 
-        constructor(file: File, parent: ResourceDirectory) : this(file, parent, parseName(file.name, false))
+        constructor(file: File, parent: ResourceDirectory) : this(file, parent, parseName(file.name, true))
 
         /** Name without flags with extension */
         val simpleName: String = if (extension.isEmpty()) this.name else this.name + '.' + this.extension

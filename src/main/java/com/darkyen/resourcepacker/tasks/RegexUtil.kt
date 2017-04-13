@@ -19,13 +19,15 @@ internal operator inline fun MatchResult.component10(): String = this.groupValue
 
 internal inline fun <T> Iterable<String>.matchFirst(r: Regex, collector: (MatchResult) -> T): T? {
     for (string in this) {
-        return collector(r.matchEntire(string) ?: continue)
+        val match = r.matchEntire(string) ?: continue
+        return collector(match)
     }
     return null
 }
 
 internal inline fun Iterable<String>.matchAll(r: Regex, collector: (MatchResult) -> Unit) {
     for (string in this) {
-        collector(r.matchEntire(string) ?: continue)
+        val match = r.matchEntire(string) ?: continue
+        collector(match)
     }
 }

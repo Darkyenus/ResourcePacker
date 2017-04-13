@@ -7,7 +7,7 @@ version := "2.0-SNAPSHOT"
 
 startYear := Some(2014)
 
-javacOptions ++= Seq("-source","7","-target","7")
+javacOptions ++= Seq("-source","7","-target","8")
 
 val gdxVersion = "1.9.6"
 
