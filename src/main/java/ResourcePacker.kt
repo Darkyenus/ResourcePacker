@@ -1,11 +1,9 @@
-import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration
-
-import java.awt.Desktop
-
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration
 import com.badlogic.gdx.graphics.Color
 import com.esotericsoftware.minlog.Log
+import java.awt.Desktop
 
 /**
  * Entry-point for the Resource Packer
@@ -34,7 +32,7 @@ fun resourcePack(vararg operations: ResourcePackerOperation) {
     Desktop.getDesktop()
 
     try {
-        Lwjgl3Application(object: ApplicationAdapter() {
+        Lwjgl3Application(object : ApplicationAdapter() {
             override fun create() {
                 for (operation in operations) {
                     operation()
@@ -42,7 +40,7 @@ fun resourcePack(vararg operations: ResourcePackerOperation) {
                 throw ExitLwjglBeforeInputPoll()
             }
         }, config)
-    } catch (normalExit:ExitLwjglBeforeInputPoll) {
+    } catch (normalExit: ExitLwjglBeforeInputPoll) {
         Log.info("Resource packing completed successfully")
     }
 }

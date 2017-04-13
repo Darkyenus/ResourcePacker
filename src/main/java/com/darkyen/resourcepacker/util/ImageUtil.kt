@@ -2,14 +2,13 @@
 
 package com.darkyen.resourcepacker.util
 
+import com.google.common.io.Files
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.awt.image.LookupOp
 import java.awt.image.LookupTable
 import java.io.File
 import javax.imageio.ImageIO
-
-import com.google.common.io.Files
 
 /**
  * Collection of methods operating on images in place, implemented with java.awt.
@@ -46,14 +45,14 @@ fun multiplyImage(imageFile: File, color: Color) {
     val originalImage = ImageIO.read(imageFile) ?: error("Couldn't load image to multiply " + imageFile.canonicalPath)
     val colorComponents = color.getRGBComponents(null)
 
-    val filter = LookupOp(object:LookupTable(0, 4) {
+    val filter = LookupOp(object : LookupTable(0, 4) {
         override fun lookupPixel(src: IntArray, dst: IntArray?): IntArray {
-        val result = dst ?: IntArray(src.size)
-        for (i in 0..3) {
-        result[i] = ((src[i] / 255f * colorComponents[i]) * 255f).toInt()
-    }
-        return result
-    }
+            val result = dst ?: IntArray(src.size)
+            for (i in 0..3) {
+                result[i] = ((src[i] / 255f * colorComponents[i]) * 255f).toInt()
+            }
+            return result
+        }
     }, null)
 
     val resultImage = filter.filter(originalImage, BufferedImage(originalImage.width, originalImage.height, originalImage.type))
@@ -71,7 +70,7 @@ fun clampImage(imageFile: File) {
     val h = raster.height
 
     fun isCullable(xs: Int, ys: Int, dx: Int, dy: Int): Boolean {
-        if(xs < 0 || ys < 0 || xs >= w || ys >= h) return false
+        if (xs < 0 || ys < 0 || xs >= w || ys >= h) return false
 
         var x = xs
         var y = ys

@@ -1,9 +1,8 @@
 package com.darkyen.resourcepacker
 
-import java.io.File
-
 import com.esotericsoftware.minlog.Log
 import com.google.common.io.Files
+import java.io.File
 
 /**
  * Class that keeps all working files in check, creates new ones and throws old ones away.
@@ -14,7 +13,7 @@ class OperationJanitor(private val workingRootProvider: WorkingRootProvider) {
 
     val workingRoot = workingRootProvider.getTemporaryRoot(this)
 
-    fun createTempFile(taskName: String, fileName:String, file: Resource.ResourceFile, extension: String?): File {
+    fun createTempFile(taskName: String, fileName: String, file: Resource.ResourceFile, extension: String?): File {
         val sb = StringBuilder()
         var result: File
         do {
@@ -28,12 +27,12 @@ class OperationJanitor(private val workingRootProvider: WorkingRootProvider) {
             sb.append('.').append(extension ?: file.extension)
             result = File(workingRoot, sb.toString())
             sb.setLength(0)
-            if(Log.DEBUG)Log.debug("OperationJanitor","Trying to create file in \""+workingRoot.canonicalPath +"\" called \""+sb+"\".")
+            if (Log.DEBUG) Log.debug("OperationJanitor", "Trying to create file in \"" + workingRoot.canonicalPath + "\" called \"" + sb + "\".")
         } while (result.exists())
         return result
     }
 
-    fun createTempFile(taskName: String, fileName:String, extension: String?): File {
+    fun createTempFile(taskName: String, fileName: String, extension: String?): File {
         val sb = StringBuilder()
         var result: File
         do {
@@ -41,11 +40,11 @@ class OperationJanitor(private val workingRootProvider: WorkingRootProvider) {
             sb.append(taskName).append("-f-")
             fillWithRandomText(sb)
             sb.append('.').append(extension ?: "")
-            if(extension != null){
+            if (extension != null) {
                 sb.append(extension)
             }
             result = File(workingRoot, sb.toString())
-            if(Log.DEBUG)Log.debug("OperationJanitor","Trying to create file from scratch in \""+workingRoot.canonicalPath +"\" called \""+sb+"\".")
+            if (Log.DEBUG) Log.debug("OperationJanitor", "Trying to create file from scratch in \"" + workingRoot.canonicalPath + "\" called \"" + sb + "\".")
             sb.setLength(0)
         } while (result.exists())
         return result
@@ -100,8 +99,8 @@ class OperationJanitor(private val workingRootProvider: WorkingRootProvider) {
     }
 
     companion object {
-        private val Vowels:CharArray = charArrayOf('a','e','i','o','u','y')
-        private val Consonants:CharArray = charArrayOf('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'z')
+        private val Vowels: CharArray = charArrayOf('a', 'e', 'i', 'o', 'u', 'y')
+        private val Consonants: CharArray = charArrayOf('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'z')
         private val Random = java.util.Random()
     }
 }
@@ -120,7 +119,7 @@ object TemporaryWorkingRootProvider : WorkingRootProvider {
 
 class LocalWorkingRootProvider(val workingRoot: File) : WorkingRootProvider {
 
-    constructor(workingRoot: String):this(File(workingRoot))
+    constructor(workingRoot: String) : this(File(workingRoot))
 
     override fun getTemporaryRoot(operationJanitor: OperationJanitor): File {
         workingRoot.mkdirs()

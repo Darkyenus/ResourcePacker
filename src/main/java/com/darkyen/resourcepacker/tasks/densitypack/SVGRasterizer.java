@@ -18,13 +18,13 @@ import java.io.FileInputStream;
  */
 public class SVGRasterizer {
 
-    public static BufferedImage rasterize(File svgFile, int fromScale, int toScale, ObjectMap<TranscodingHints.Key, Object> hintsOverride){
+    public static BufferedImage rasterize(File svgFile, int fromScale, int toScale, ObjectMap<TranscodingHints.Key, Object> hintsOverride) {
         FileInputStream inputStream = null;
-        final float scale = (float)toScale / (float)fromScale;
+        final float scale = (float) toScale / (float) fromScale;
         try {
             final SimpleTranscoder transcoder = new SimpleTranscoder(scale);
             transcoder.addTranscodingHint(ImageTranscoder.KEY_BACKGROUND_COLOR, new Color(0, 0, 0, 0));
-            if(hintsOverride != null){
+            if (hintsOverride != null) {
                 for (ObjectMap.Entry<TranscodingHints.Key, Object> entry : hintsOverride) {
                     transcoder.addTranscodingHint(entry.key, entry.value);
                 }
@@ -35,7 +35,7 @@ public class SVGRasterizer {
             transcoder.transcode(in, null);
             return transcoder.result;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to rasterize file "+svgFile+" at scale "+scale, e);
+            throw new RuntimeException("Failed to rasterize file " + svgFile + " at scale " + scale, e);
         } finally {
             StreamUtils.closeQuietly(inputStream);
         }

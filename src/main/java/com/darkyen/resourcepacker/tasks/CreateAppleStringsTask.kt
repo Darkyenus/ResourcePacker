@@ -21,7 +21,7 @@ object CreateAppleStringsTask : Task() {
 
     val CreateStringsFlag = "AppleStrings".toLowerCase()
 
-    fun escape(text:String):CharSequence {
+    fun escape(text: String): CharSequence {
         val result = StringBuilder()
         for (c in text) {
             when (c) {
@@ -36,10 +36,10 @@ object CreateAppleStringsTask : Task() {
     }
 
     override fun operate(directory: ResourceDirectory): Boolean {
-        if(directory.flags.contains(CreateStringsFlag)){
+        if (directory.flags.contains(CreateStringsFlag)) {
             val strings = StringBuilder()
 
-            for(stringFile in directory.files){
+            for (stringFile in directory.files) {
                 val content = Files.toString(stringFile.file, Charsets.UTF_8)
                 strings.append('"').append(escape(stringFile.name)).append("\" = \"").append(escape(content)).append("\";\n")
             }

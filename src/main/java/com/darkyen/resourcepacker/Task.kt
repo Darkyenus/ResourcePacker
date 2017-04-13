@@ -23,7 +23,7 @@ abstract class Task {
         prepare()
     }
 
-    val Name:String = javaClass.simpleName
+    val Name: String = javaClass.simpleName
 
     /**
      * Creates a new file based on given existing file.
@@ -43,7 +43,7 @@ abstract class Task {
      *
      * @return non existent file, ready to be created
      */
-    fun newFileNamed(basedOn: Resource.ResourceFile, fileName:String, extension: String? = null): File {
+    fun newFileNamed(basedOn: Resource.ResourceFile, fileName: String, extension: String? = null): File {
         return janitor.createTempFile(Name, fileName, basedOn, extension)
     }
 
@@ -55,7 +55,7 @@ abstract class Task {
      * @param extension to give the file or null if irrelevant
      * @return non existent file, ready to be created
      */
-    fun newBlankFile(fileName:String, extension:String? = null):File {
+    fun newBlankFile(fileName: String, extension: String? = null): File {
         return janitor.createTempFile(Name, fileName, extension)
     }
 
@@ -70,7 +70,8 @@ abstract class Task {
     /**
      * Called before each run. Reset your internal state here (if you keep any).
      */
-    open fun prepare() {}
+    open fun prepare() {
+    }
 
     /** Do your work here.
      * Called once for each file remaining in virtual working filesystem, per run.

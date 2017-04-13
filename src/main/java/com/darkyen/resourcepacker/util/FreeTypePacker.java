@@ -36,7 +36,7 @@ import java.nio.ByteBuffer;
 
 /**
  * FreeType based font rasterizer and packer.
- *
+ * <p>
  * BASED ON {@link com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator} FROM libGDX PROJECT, SEE HEADER
  */
 public class FreeTypePacker {
@@ -45,12 +45,14 @@ public class FreeTypePacker {
     final FreeType.Face face;
     final FileHandle fontFile;
 
-    /** Creates a new generator from the given font file. Uses {@link FileHandle#length()} to determine the file size. If the file
+    /**
+     * Creates a new generator from the given font file. Uses {@link FileHandle#length()} to determine the file size. If the file
      * length could not be determined (it was 0), an extra copy of the font bytes is performed. Throws a
-     * {@link GdxRuntimeException} if loading did not succeed. */
+     * {@link GdxRuntimeException} if loading did not succeed.
+     */
     public FreeTypePacker(FileHandle fontFile) {
         this.fontFile = fontFile;
-        int fileSize = (int)fontFile.length();
+        int fileSize = (int) fontFile.length();
 
         library = FreeType.initFreeType();
         if (library == null) throw new GdxRuntimeException("Couldn't initialize FreeType");
@@ -97,7 +99,7 @@ public class FreeTypePacker {
         }
     }
 
-    public Array<FileHandle> generate (FreeTypeFontParameter parameter, FileHandle outputFolder) {
+    public Array<FileHandle> generate(FreeTypeFontParameter parameter, FileHandle outputFolder) {
         final Array<FileHandle> resultFiles = new Array<>(FileHandle.class);
 
         if (!face.setPixelSizes(0, parameter.size)) throw new GdxRuntimeException("Couldn't set size for font");
@@ -112,19 +114,19 @@ public class FreeTypePacker {
         FreeType.Stroker stroker = null;
         if (parameter.borderWidth > 0) {
             stroker = library.createStroker();
-            stroker.set((int)(parameter.borderWidth * 64f),
+            stroker.set((int) (parameter.borderWidth * 64f),
                     parameter.borderStraight ? FreeType.FT_STROKER_LINECAP_BUTT : FreeType.FT_STROKER_LINECAP_ROUND,
                     parameter.borderStraight ? FreeType.FT_STROKER_LINEJOIN_MITER_FIXED : FreeType.FT_STROKER_LINEJOIN_ROUND, 0);
         }
 
-        if(parameter.codePoints == null) {
+        if (parameter.codePoints == null) {
             for (int codePoint = 0; codePoint < 0x10FFFF; codePoint++) {
                 createGlyph(codePoint, parameter, stroker, glyphs);
             }
         } else {
             parameter.codePoints.add(0);
             parameter.codePoints.add(' ');
-            for(final IntSet.IntSetIterator it = parameter.codePoints.iterator();it.hasNext;){
+            for (final IntSet.IntSetIterator it = parameter.codePoints.iterator(); it.hasNext; ) {
                 createGlyph(it.next(), parameter, stroker, glyphs);
             }
         }
@@ -140,7 +142,7 @@ public class FreeTypePacker {
                 totalSize2 += glyph.pixmap.getWidth() * glyph.pixmap.getHeight();
             }
             final double waste = 1.2;
-            int totalSize = (int)Math.ceil(Math.sqrt(totalSize2 * waste));
+            int totalSize = (int) Math.ceil(Math.sqrt(totalSize2 * waste));
             int size = MathUtils.nextPowerOfTwo(totalSize);
             if (size > 4096) size = 4096;
             //System.out.println("Will use size: "+size);
@@ -180,7 +182,7 @@ public class FreeTypePacker {
             int pageNo = 0;
             final boolean addPageNumbers = packer.getPages().size > 1;
             for (PixmapPacker.Page page : packer.getPages()) {
-                final FileHandle file = outputFolder.child(parameter.fontName + (addPageNumbers ? "_"+pageNo:"") + ".png");
+                final FileHandle file = outputFolder.child(parameter.fontName + (addPageNumbers ? "_" + pageNo : "") + ".png");
                 resultFiles.add(file);
                 PixmapIO.writePNG(file, page.getPixmap());
                 fnt.append("page id=").append(pageNo).append(" file=\"").append(file.name()).append("\"");
@@ -213,7 +215,7 @@ public class FreeTypePacker {
         if (parameter.kerning) {
             fnt.append("kernings \n");//No count, not needed
 
-            if(face.hasKerning()) {
+            if (face.hasKerning()) {
                 final int glyphsSize = glyphs.size;
 
                 for (int i = 0; i < glyphsSize; i++) {
@@ -255,7 +257,7 @@ public class FreeTypePacker {
                     for (int i = 0; i < pairCount; i++) {
                         final int firstChar = glyphToCodePoint.get(first[i], -1);
                         final int secondChar = glyphToCodePoint.get(second[i], -1);
-                        if(firstChar == -1 || secondChar == -1) {
+                        if (firstChar == -1 || secondChar == -1) {
                             continue;
                         }
                         fnt.append("kerning first=").append(firstChar).append(" second=").append(secondChar).append(" amount=").append(amount[i]).append('\n');
@@ -276,15 +278,17 @@ public class FreeTypePacker {
 
     private void createGlyph(int codePoint, FreeTypeFontParameter parameter, FreeType.Stroker stroker, Array<CharacterData> glyphs) {
         final int glyphIndex = face.getCharIndex(codePoint);
-        if(glyphIndex == 0 && codePoint != 0) return;
+        if (glyphIndex == 0 && codePoint != 0) return;
         final CharacterData data = createGlyph(codePoint, glyphIndex, parameter, stroker);
-        if(data != null) {
+        if (data != null) {
             glyphs.add(data);
         }
     }
 
-    /** @return null if glyph was not found. */
-    CharacterData createGlyph (int codePoint, int glyphIndex, FreeTypeFontParameter parameter, FreeType.Stroker stroker) {
+    /**
+     * @return null if glyph was not found.
+     */
+    CharacterData createGlyph(int codePoint, int glyphIndex, FreeTypeFontParameter parameter, FreeType.Stroker stroker) {
         if (!face.loadGlyph(glyphIndex, parameter.loadingFlags)) return null;
 
         FreeType.GlyphSlot slot = face.getGlyph();
@@ -331,7 +335,7 @@ public class FreeTypePacker {
                 Pixmap shadowPixmap = new Pixmap(shadowW, shadowH, mainPixmap.getFormat());
 
                 Color shadowColor = parameter.shadowColor;
-                byte r = (byte)(shadowColor.r * 255), g = (byte)(shadowColor.g * 255), b = (byte)(shadowColor.b * 255);
+                byte r = (byte) (shadowColor.r * 255), g = (byte) (shadowColor.g * 255), b = (byte) (shadowColor.b * 255);
                 float a = shadowColor.a;
 
                 ByteBuffer mainPixels = mainPixmap.getPixels();
@@ -346,7 +350,7 @@ public class FreeTypePacker {
                         shadowPixels.put(shadowPixel, r);
                         shadowPixels.put(shadowPixel + 1, g);
                         shadowPixels.put(shadowPixel + 2, b);
-                        shadowPixels.put(shadowPixel + 3, (byte)((mainA & 0xff) * a));
+                        shadowPixels.put(shadowPixel + 3, (byte) ((mainA & 0xff) * a));
                     }
                 }
 
@@ -373,43 +377,75 @@ public class FreeTypePacker {
         return data;
     }
 
-    public void dispose(){
+    public void dispose() {
         face.dispose();
         library.dispose();
     }
 
     public static class FreeTypeFontParameter {
-        /** Font name, used for output */
+        /**
+         * Font name, used for output
+         */
         public String fontName;
-        /** The size in pixels */
+        /**
+         * The size in pixels
+         */
         public int size = 16;
-        /** Code-points to include, by default null which means to add all present. */
+        /**
+         * Code-points to include, by default null which means to add all present.
+         */
         public IntSet codePoints = null;
-        /** If true, font smoothing is disabled. */
+        /**
+         * If true, font smoothing is disabled.
+         */
         public boolean mono;
-        /** Loading flags used for {@link com.badlogic.gdx.graphics.g2d.freetype.FreeType.Face#loadGlyph(int, int)}. */
+        /**
+         * Loading flags used for {@link com.badlogic.gdx.graphics.g2d.freetype.FreeType.Face#loadGlyph(int, int)}.
+         */
         public int loadingFlags = FreeType.FT_LOAD_DEFAULT;
-        /** Foreground color (required for non-black borders) */
+        /**
+         * Foreground color (required for non-black borders)
+         */
         public Color color = Color.WHITE;
-        /** Glyph gamma. Values > 1 reduce antialiasing. */
+        /**
+         * Glyph gamma. Values > 1 reduce antialiasing.
+         */
         public float gamma = 1.8f;
-        /** Number of times to render the glyph. Useful with a shadow or border, so it doesn't show through the glyph. */
+        /**
+         * Number of times to render the glyph. Useful with a shadow or border, so it doesn't show through the glyph.
+         */
         public int renderCount = 2;
-        /** Border width in pixels, 0 to disable */
+        /**
+         * Border width in pixels, 0 to disable
+         */
         public float borderWidth = 0;
-        /** Border color; only used if borderWidth > 0 */
+        /**
+         * Border color; only used if borderWidth > 0
+         */
         public Color borderColor = Color.BLACK;
-        /** true for straight (mitered), false for rounded borders */
+        /**
+         * true for straight (mitered), false for rounded borders
+         */
         public boolean borderStraight = false;
-        /** Values < 1 increase the border size. */
+        /**
+         * Values < 1 increase the border size.
+         */
         public float borderGamma = 1.8f;
-        /** Offset of text shadow on X axis in pixels, 0 to disable */
+        /**
+         * Offset of text shadow on X axis in pixels, 0 to disable
+         */
         public int shadowOffsetX = 0;
-        /** Offset of text shadow on Y axis in pixels, 0 to disable */
+        /**
+         * Offset of text shadow on Y axis in pixels, 0 to disable
+         */
         public int shadowOffsetY = 0;
-        /** Shadow color; only used if shadowOffset > 0 */
+        /**
+         * Shadow color; only used if shadowOffset > 0
+         */
         public Color shadowColor = new Color(0, 0, 0, 0.75f);
-        /** Whether the font should include kerning */
+        /**
+         * Whether the font should include kerning
+         */
         public boolean kerning = true;
     }
 

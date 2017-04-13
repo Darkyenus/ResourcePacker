@@ -2,13 +2,12 @@ package com.darkyen.resourcepacker.tasks
 
 import com.darkyen.resourcepacker.Resource.ResourceFile
 import com.darkyen.resourcepacker.Task
-import java.io.File
-
 import com.esotericsoftware.minlog.Log
 import com.google.common.base.Charsets
-import com.google.common.io.Files
 import com.google.common.io.ByteStreams
+import com.google.common.io.Files
 import org.lwjgl.system.Platform
+import java.io.File
 import java.io.FileOutputStream
 
 /**
@@ -37,7 +36,7 @@ object ConvertModelsTask : Task() {
 
     private fun findDependentFiles(file: ResourceFile, regex: Regex): List<ResourceFile> {
         val result = ArrayList<ResourceFile>()
-        Files.readLines(file.file, Charsets.UTF_8).matchAll(regex){(dependencyFileName) ->
+        Files.readLines(file.file, Charsets.UTF_8).matchAll(regex) { (dependencyFileName) ->
             val parts = dependencyFileName.split('/')
             var directory = file.parent
             for (subdirectory in parts.dropLast(1)) {
@@ -121,7 +120,7 @@ object ConvertModelsTask : Task() {
 
         Log.info(Name, "Converting " + file.extension + " file. " + file + " " + args + " " + options + " " + file.flags.joinToString("."))
 
-        when(Platform.get()) {
+        when (Platform.get()) {
             Platform.MACOSX ->
                 executeCommand(args, linkFbxSdk = true)
             Platform.WINDOWS ->
@@ -153,15 +152,15 @@ object ConvertModelsTask : Task() {
         destination.setExecutable(true, false)
     }
 
-    private val fbxConvExecutable:File by lazy {
+    private val fbxConvExecutable: File by lazy {
         val executableFolder = newFolder()
-        val executable:File
+        val executable: File
         val platform = Platform.get()
-        when(platform) {
+        when (platform) {
             Platform.MACOSX -> {
-                executable = File (executableFolder, "fbx-conv-mac")
+                executable = File(executableFolder, "fbx-conv-mac")
                 copyResourceToFolder(executable, "fbxconv/osx/fbx-conv-mac")
-                copyResourceToFolder(File (executableFolder, "libfbxsdk.dylib"), "fbxconv/osx/libfbxsdk.dylib")
+                copyResourceToFolder(File(executableFolder, "libfbxsdk.dylib"), "fbxconv/osx/libfbxsdk.dylib")
             }
             Platform.WINDOWS -> {
                 executable = File(executableFolder, "fbx-conv-win32.exe")
@@ -173,7 +172,7 @@ object ConvertModelsTask : Task() {
                 copyResourceToFolder(File(executableFolder, "libfbxsdk.so"), "fbxconv/linux/libfbxsdk.so")
             }
             else -> {
-                error("Failed to prepare fbx-conv executable, unknown platform: "+platform)
+                error("Failed to prepare fbx-conv executable, unknown platform: " + platform)
             }
         }
         return@lazy executable

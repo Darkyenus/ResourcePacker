@@ -15,7 +15,7 @@ package com.darkyen.resourcepacker
  */
 class SettingKey<T>(val name: String, private val defaultValue: T, val help: String = "") {
 
-    infix fun to(value:T):Setting<T> {
+    infix fun to(value: T): Setting<T> {
         return Setting(this, value)
     }
 

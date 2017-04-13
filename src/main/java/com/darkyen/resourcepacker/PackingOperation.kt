@@ -12,12 +12,12 @@ import java.io.File
 class PackingOperation(val from: File, val to: File,
                        val settings: List<Setting<*>> = emptyList(),
                        val tasks: List<Task> = DefaultTasks,
-                       val workingRootProvider: WorkingRootProvider = TemporaryWorkingRootProvider) : ()->Unit {
+                       val workingRootProvider: WorkingRootProvider = TemporaryWorkingRootProvider) : () -> Unit {
 
-    constructor(from:String, to:String,
+    constructor(from: String, to: String,
                 settings: List<Setting<*>> = emptyList(),
                 tasks: List<Task> = DefaultTasks,
-                workingRootProvider: WorkingRootProvider = TemporaryWorkingRootProvider):
+                workingRootProvider: WorkingRootProvider = TemporaryWorkingRootProvider) :
             this(File(from), File(to), settings, tasks, workingRootProvider)
 
     private fun createTree(root: File): Resource.ResourceDirectory? {

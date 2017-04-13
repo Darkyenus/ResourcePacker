@@ -7,11 +7,11 @@ import com.darkyen.resourcepacker.Resource.Companion.isFont
 import com.darkyen.resourcepacker.Resource.ResourceFile
 import com.darkyen.resourcepacker.Task
 import com.darkyen.resourcepacker.util.FreeTypePacker
-import com.esotericsoftware.minlog.Log
-import com.google.common.io.Files
 import com.darkyen.resourcepacker.util.FreeTypePacker.FreeTypeFontParameter
 import com.darkyen.resourcepacker.util.clampImage
 import com.darkyen.resourcepacker.util.preBlendImage
+import com.esotericsoftware.minlog.Log
+import com.google.common.io.Files
 
 /**
  * Rasterizes .ttf fonts.
@@ -38,48 +38,48 @@ object CreateFontsTask : Task() {
 
     private val HexColorCapture = "([0-9A-Fa-f]{1,8})"
 
-    private fun Int.c():Float = MathUtils.clamp(this, 0, 255).toFloat() / 255f
+    private fun Int.c(): Float = MathUtils.clamp(this, 0, 255).toFloat() / 255f
 
-    private fun parseHexColor(hex:String):Color {
+    private fun parseHexColor(hex: String): Color {
         return when (hex.length) {
             1 -> {//Gray
                 val gray = (Integer.parseInt(hex, 16) * 0xF).c()
                 Color(gray, gray, gray, 1f)
             }
             2 -> { //Gray with alpha
-                val gray = (Integer.parseInt(hex.substring(0,1), 16) * 0xF).c()
+                val gray = (Integer.parseInt(hex.substring(0, 1), 16) * 0xF).c()
                 val alpha = (Integer.parseInt(hex.substring(1, 2), 16) * 0xF).c()
                 Color(gray, gray, gray, alpha)
 
             }
             3 -> {//RGB
-                val r = (Integer.parseInt(hex.substring(0,1), 16) * 0xF).c()
+                val r = (Integer.parseInt(hex.substring(0, 1), 16) * 0xF).c()
                 val g = (Integer.parseInt(hex.substring(1, 2), 16) * 0xF).c()
                 val b = (Integer.parseInt(hex.substring(2, 3), 16) * 0xF).c()
                 Color(r, g, b, 1f)
 
             }
             4 -> {//RGBA
-                val r = (Integer.parseInt(hex.substring(0,1), 16) * 0xF).c()
+                val r = (Integer.parseInt(hex.substring(0, 1), 16) * 0xF).c()
                 val g = (Integer.parseInt(hex.substring(1, 2), 16) * 0xF).c()
                 val b = (Integer.parseInt(hex.substring(2, 3), 16) * 0xF).c()
                 val a = (Integer.parseInt(hex.substring(3, 4), 16) * 0xF).c()
-                Color(r,g,b,a)
+                Color(r, g, b, a)
 
             }
             5 -> {//RGBAA
-                val r = (Integer.parseInt(hex.substring(0,1), 16) * 0xF).c()
+                val r = (Integer.parseInt(hex.substring(0, 1), 16) * 0xF).c()
                 val g = (Integer.parseInt(hex.substring(1, 2), 16) * 0xF).c()
                 val b = (Integer.parseInt(hex.substring(2, 3), 16) * 0xF).c()
                 val a = Integer.parseInt(hex.substring(3, 5), 16).c()
-                Color(r,g,b,a)
+                Color(r, g, b, a)
 
             }
             6 -> {//RRGGBB
                 val r = Integer.parseInt(hex.substring(0, 2), 16).c()
                 val g = Integer.parseInt(hex.substring(2, 4), 16).c()
                 val b = Integer.parseInt(hex.substring(4, 6), 16).c()
-                Color(r,g,b,1f)
+                Color(r, g, b, 1f)
 
             }
             7 -> {//RRGGBBA
@@ -87,7 +87,7 @@ object CreateFontsTask : Task() {
                 val g = Integer.parseInt(hex.substring(2, 4), 16).c()
                 val b = Integer.parseInt(hex.substring(4, 6), 16).c()
                 val a = (Integer.parseInt(hex.substring(6, 7), 16) * 0xF).c()
-                Color(r,g,b,a)
+                Color(r, g, b, a)
 
             }
             8 -> {//RRGGBBAA
@@ -95,7 +95,7 @@ object CreateFontsTask : Task() {
                 val g = Integer.parseInt(hex.substring(2, 4), 16).c()
                 val b = Integer.parseInt(hex.substring(4, 6), 16).c()
                 val a = Integer.parseInt(hex.substring(6, 8), 16).c()
-                Color(r,g,b,a)
+                Color(r, g, b, a)
 
             }
             else -> error("Invalid color: $hex")
@@ -122,7 +122,6 @@ object CreateFontsTask : Task() {
     val BGRegex = Regex("bg#$HexColorCapture")
     /** Matches bg#RRGGBBAA colors for foreground (color of font). Default is White. */
     val FGRegex = Regex("fg#$HexColorCapture")
-
 
 
     override fun operate(file: ResourceFile): Boolean {
@@ -189,7 +188,7 @@ object CreateFontsTask : Task() {
                 Log.info(Name, "Font created. " + file)
                 file.parent.removeChild(file)
 
-                var bgColor:Color? = null
+                var bgColor: Color? = null
                 for (param in params) {
                     bgColor = parseHexColor(BGRegex.matchEntire(param)?.groupValues?.get(1) ?: continue)
                     Log.debug(Name, "Background color for font set. " + file)

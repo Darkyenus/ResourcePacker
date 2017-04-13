@@ -1,15 +1,14 @@
 package com.darkyen.resourcepacker.tasks
 
-import java.awt.*
-import java.awt.image.BufferedImage
-import javax.imageio.ImageIO
-
 import com.badlogic.gdx.math.MathUtils
 import com.darkyen.resourcepacker.Resource.Companion.isImage
 import com.darkyen.resourcepacker.Resource.ResourceFile
 import com.darkyen.resourcepacker.SettingKey
 import com.darkyen.resourcepacker.Task
 import com.esotericsoftware.minlog.Log
+import java.awt.RenderingHints
+import java.awt.image.BufferedImage
+import javax.imageio.ImageIO
 
 /**
  * Resizes image by given arguments
@@ -53,8 +52,8 @@ object ResizeTask : Task() {
             for (flag in file.flags) {
                 val tileMatch = TileSizePattern.matchEntire(flag)
                 val pixelMatch = PixelSizePattern.matchEntire(flag)
-                val width:Int
-                val height:Int
+                val width: Int
+                val height: Int
                 if (tileMatch != null) {
                     width = tileFraction(tileMatch.groupValues[1])
                     height = tileFraction(tileMatch.groupValues[2])

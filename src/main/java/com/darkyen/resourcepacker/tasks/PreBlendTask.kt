@@ -38,7 +38,7 @@ object PreBlendTask : Task() {
      * @return whether the operation did something or not */
     override fun operate(file: ResourceFile): Boolean {
         if (file.isImage()) {
-            file.flags.matchFirst(PreBlendRegex) { (r,g,b) ->
+            file.flags.matchFirst(PreBlendRegex) { (r, g, b) ->
                 val color = Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16))
                 val output = newFile(file)
                 Files.copy(file.file, output)

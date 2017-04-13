@@ -1,9 +1,5 @@
 package com.darkyen.resourcepacker.tasks
 
-import java.awt.Color
-import java.io.FileReader
-import javax.imageio.ImageIO
-
 import com.badlogic.gdx.utils.Json
 import com.badlogic.gdx.utils.JsonReader
 import com.darkyen.resourcepacker.Resource
@@ -14,6 +10,9 @@ import com.darkyen.resourcepacker.util.preBlendImage
 import com.darkyen.resourcepacker.util.tools.texturepacker.TexturePacker
 import com.esotericsoftware.minlog.Log
 import com.google.common.io.Files
+import java.awt.Color
+import java.io.FileReader
+import javax.imageio.ImageIO
 
 /**
  * Packs all images in .pack. flagged directory using libGDX's texture packer and then flattens it.
@@ -61,17 +60,17 @@ object PackTask : Task() {
             if (packFile.name == "pack" && packFile.extension == "json") {
                 json.readFields(settings, jsonReader.parse(FileReader(packFile.file)))
                 directory.removeChild(packFile)
-                if(Log.DEBUG) Log.debug(Name, "Json packer settings loaded. " + packFile.file.canonicalPath)
+                if (Log.DEBUG) Log.debug(Name, "Json packer settings loaded. " + packFile.file.canonicalPath)
                 break
             }
         }
 
-        if(settings.duplicatePadding && (settings.paddingX < 2 && settings.paddingY < 2)){
+        if (settings.duplicatePadding && (settings.paddingX < 2 && settings.paddingY < 2)) {
             Log.warn(Name, "duplicatePadding is true, but padding is less than 2 so it won't have any effect")
-        } else if(settings.duplicatePadding && (settings.paddingX < 2 || settings.paddingY < 2)){
-            if(Log.DEBUG)Log.debug(Name,
-                    "duplicatePadding is true, but padding of one dimension is less than 2 so it won't have any effect "+
-                            "(paddingX = "+settings.paddingX+", paddingY = "+settings.paddingY+")")
+        } else if (settings.duplicatePadding && (settings.paddingX < 2 || settings.paddingY < 2)) {
+            if (Log.DEBUG) Log.debug(Name,
+                    "duplicatePadding is true, but padding of one dimension is less than 2 so it won't have any effect " +
+                            "(paddingX = " + settings.paddingX + ", paddingY = " + settings.paddingY + ")")
         }
 
         val packer = TexturePacker(settings)
@@ -82,7 +81,7 @@ object PackTask : Task() {
                 Log.error(Name, "Image could not be loaded. " + image)
             } else {
                 packer.addImage(bufferedImage, image.name + (if (image.flags.contains("9")) ".9" else ""))
-                if(Log.DEBUG) Log.debug(Name, "Image added to pack. $image")
+                if (Log.DEBUG) Log.debug(Name, "Image added to pack. $image")
             }
             directory.removeChild(image)
         }
@@ -92,7 +91,7 @@ object PackTask : Task() {
         packer.pack(outputFolder, atlasName)
 
         val preBlendColor = directory.flags.matchFirst(PreBlendRegex) { (r, g, b) ->
-            if (Log.DEBUG)Log.debug(Name, "Blending color for atlas set. " + atlasName)
+            if (Log.DEBUG) Log.debug(Name, "Blending color for atlas set. " + atlasName)
             Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16))
         }
 

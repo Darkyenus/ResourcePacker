@@ -1,8 +1,8 @@
 package com.darkyen.resourcepacker
 
-import java.io.File
 import com.esotericsoftware.minlog.Log
 import com.google.common.io.Files
+import java.io.File
 
 /**
 
@@ -26,10 +26,10 @@ sealed class Resource {
 
     class ResourceDirectory(var directory: File, parent: ResourceDirectory?) : Resource() {
 
-        override var parent:ResourceDirectory = parent ?: this
+        override var parent: ResourceDirectory = parent ?: this
 
-        override val name:String
-        val flags:List<String>
+        override val name: String
+        val flags: List<String>
 
         init {
             val parsedName = parseName(directory.name, false)
@@ -43,10 +43,10 @@ sealed class Resource {
         private val removedFileChildren = ArrayList<ResourceFile>()
         private val removedDirChildren = ArrayList<ResourceDirectory>()
 
-        val files:Set<ResourceFile>
+        val files: Set<ResourceFile>
             get() = childrenFiles
 
-        val directories:Set<ResourceDirectory>
+        val directories: Set<ResourceDirectory>
             get() = childrenDirectories
 
         fun hasChildren(): Boolean = childrenDirectories.isNotEmpty() || childrenFiles.isNotEmpty()
@@ -70,21 +70,21 @@ sealed class Resource {
         fun removeChild(res: Resource) {
             when (res) {
                 is ResourceDirectory ->
-                        removeChild(res)
+                    removeChild(res)
                 is ResourceFile ->
-                        removeChild(res)
+                    removeChild(res)
             }
         }
 
         @Deprecated("Too slow")
-        fun children():Set<Resource> {
+        fun children(): Set<Resource> {
             val result = HashSet<Resource>()
             result.addAll(childrenFiles)
             result.addAll(childrenDirectories)
             return result
         }
 
-        inline fun forEachChild(action:(Resource)->Unit) {
+        inline fun forEachChild(action: (Resource) -> Unit) {
             files.forEach(action)
             directories.forEach(action)
         }
@@ -104,9 +104,9 @@ sealed class Resource {
         fun addChild(res: Resource): Resource {
             return when (res) {
                 is ResourceFile ->
-                        addChild(res)
+                    addChild(res)
                 is ResourceDirectory ->
-                        addChild(res)
+                    addChild(res)
             }
         }
 
@@ -205,10 +205,10 @@ sealed class Resource {
             }
         }
 
-        fun toPrettyString(sb:StringBuilder, level:Int): Unit {
+        fun toPrettyString(sb: StringBuilder, level: Int): Unit {
             fun appendLevel() {
                 var i = 0
-                while(i < level){
+                while (i < level) {
                     sb.append("    ")
                     i += 1
                 }
@@ -233,11 +233,11 @@ sealed class Resource {
     class ResourceFile(
             file: File,
             override var parent: ResourceDirectory,
-            override val name:String,
-            val flags:List<String>,
-            val extension:String) : Resource() {
+            override val name: String,
+            val flags: List<String>,
+            val extension: String) : Resource() {
 
-        var file:File = file
+        var file: File = file
             get() {
                 if (!field.exists() || !field.isFile) {
                     error("This should not happen - given file does not exist. (${field.canonicalPath})")
@@ -245,12 +245,12 @@ sealed class Resource {
                 return field
             }
 
-        private constructor(file: File, parent: ResourceDirectory, parseName:Triple<String, List<String>, String>) : this(file, parent, parseName.first, parseName.second, parseName.third)
+        private constructor(file: File, parent: ResourceDirectory, parseName: Triple<String, List<String>, String>) : this(file, parent, parseName.first, parseName.second, parseName.third)
 
-        constructor(file:File, parent: ResourceDirectory) : this(file, parent, parseName(file.name, false))
+        constructor(file: File, parent: ResourceDirectory) : this(file, parent, parseName(file.name, false))
 
         /** Name without flags with extension */
-        val simpleName:String = if (extension.isEmpty()) this.name else this.name + '.' + this.extension
+        val simpleName: String = if (extension.isEmpty()) this.name else this.name + '.' + this.extension
 
         override fun toString(): String {
             val builder = StringBuilder()
@@ -282,10 +282,10 @@ sealed class Resource {
         /**
          * Parse file/directory name into name, flags and extension, if requested and present
          */
-        fun parseName(fileName: String, withExtension:Boolean):Triple<String, List<String>, String> {
+        fun parseName(fileName: String, withExtension: Boolean): Triple<String, List<String>, String> {
             val name = StringBuilder()
             val flags = ArrayList<String>()
-            val extension:String
+            val extension: String
 
             val nameParts = fileName.split('.')
             name.append(nameParts.first())
@@ -303,8 +303,8 @@ sealed class Resource {
             return Triple(name.toString(), flags, extension)
         }
 
-        fun ResourceFile.isImage():Boolean = extension == "png" || extension == "jpg" || extension == "jpeg" || extension == "gif"
-        fun ResourceFile.isVectorImage():Boolean = extension == "svg"
-        fun ResourceFile.isFont():Boolean = extension == "ttf" || extension == "otf"
+        fun ResourceFile.isImage(): Boolean = extension == "png" || extension == "jpg" || extension == "jpeg" || extension == "gif"
+        fun ResourceFile.isVectorImage(): Boolean = extension == "svg"
+        fun ResourceFile.isFont(): Boolean = extension == "ttf" || extension == "otf"
     }
 }
