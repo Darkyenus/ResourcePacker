@@ -120,6 +120,8 @@ object TemporaryWorkingRootProvider : WorkingRootProvider {
 
 class LocalWorkingRootProvider(val workingRoot: File) : WorkingRootProvider {
 
+    constructor(workingRoot: String):this(File(workingRoot))
+
     override fun getTemporaryRoot(operationJanitor: OperationJanitor): File {
         workingRoot.mkdirs()
         operationJanitor.clearFolder(workingRoot)

@@ -14,6 +14,12 @@ class PackingOperation(val from: File, val to: File,
                        val tasks: List<Task> = DefaultTasks,
                        val workingRootProvider: WorkingRootProvider = TemporaryWorkingRootProvider) : ()->Unit {
 
+    constructor(from:String, to:String,
+                settings: List<Setting<*>> = emptyList(),
+                tasks: List<Task> = DefaultTasks,
+                workingRootProvider: WorkingRootProvider = TemporaryWorkingRootProvider):
+            this(File(from), File(to), settings, tasks, workingRootProvider)
+
     private fun createTree(root: File): Resource.ResourceDirectory? {
         if (!root.isDirectory) {
             Log.error("ResourcePacker", "${root.canonicalPath} is not a directory.")
