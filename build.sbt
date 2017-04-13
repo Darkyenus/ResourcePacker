@@ -3,13 +3,9 @@ organization := "com.github.Darkyenus" //Default jitpack organization
 
 name := "ResourcePacker"
 
-version := "1.10-SNAPSHOT"
-
-scalaVersion := "2.11.7"
+version := "2.0-SNAPSHOT"
 
 startYear := Some(2014)
-
-scalacOptions ++= Seq("-deprecation","-feature","-target:jvm-1.7")
 
 javacOptions ++= Seq("-source","7","-target","7")
 

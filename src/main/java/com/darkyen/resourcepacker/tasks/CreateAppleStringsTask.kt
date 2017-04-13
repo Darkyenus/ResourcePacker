@@ -1,6 +1,5 @@
 package com.darkyen.resourcepacker.tasks
 
-import com.darkyen.resourcepacker.Resource
 import com.darkyen.resourcepacker.Resource.ResourceDirectory
 import com.darkyen.resourcepacker.Resource.ResourceFile
 import com.darkyen.resourcepacker.Task

@@ -14,10 +14,9 @@
  * limitations under the License.
  ******************************************************************************/
 
-package darkyenus.resourcepacker.tasks.densitypack;
+package com.darkyen.resourcepacker.tasks.densitypack;
 
 import com.badlogic.gdx.math.MathUtils;
-import darkyenus.resourcepacker.tasks.densitypack.TexturePacker.*;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Sort;
 
@@ -26,23 +25,23 @@ import java.util.Comparator;
 /** Packs pages of images using the maximal rectangles bin packing algorithm by Jukka Jylänki. A brute force binary search is
  * used to pack into the smallest bin possible.
  * @author Nathan Sweet */
-public class MaxRectsPacker implements Packer {
+public class MaxRectsPacker implements TexturePacker.Packer {
 	private RectComparator rectComparator = new RectComparator();
 	private FreeRectChoiceHeuristic[] methods = FreeRectChoiceHeuristic.values();
 	private MaxRects maxRects = new MaxRects();
-	Settings settings;
+	TexturePacker.Settings settings;
 	private Sort sort = new Sort();
 
-	public MaxRectsPacker (Settings settings) {
+	public MaxRectsPacker (TexturePacker.Settings settings) {
 		this.settings = settings;
 		if (settings.minWidth > settings.maxWidth) throw new RuntimeException("Page min width cannot be higher than max width.");
 		if (settings.minHeight > settings.maxHeight)
 			throw new RuntimeException("Page min height cannot be higher than max height.");
 	}
 
-	public Array<Page> pack (Array<Rect> inputRects) {
+	public Array<TexturePacker.Page> pack (Array<TexturePacker.Rect> inputRects) {
 		for (int i = 0, nn = inputRects.size; i < nn; i++) {
-			Rect rect = inputRects.get(i);
+			TexturePacker.Rect rect = inputRects.get(i);
 			rect.pageWidth += settings.paddingX;
 			rect.pageHeight += settings.paddingY;
 		}
@@ -50,8 +49,8 @@ public class MaxRectsPacker implements Packer {
 		if (settings.fast) {
 			if (settings.rotation) {
 				// Sort by longest side if rotation is enabled.
-				sort.sort(inputRects, new Comparator<Rect>() {
-					public int compare (Rect o1, Rect o2) {
+				sort.sort(inputRects, new Comparator<TexturePacker.Rect>() {
+					public int compare (TexturePacker.Rect o1, TexturePacker.Rect o2) {
 						int n1 = o1.pageWidth > o1.pageHeight ? o1.pageWidth : o1.pageHeight;
 						int n2 = o2.pageWidth > o2.pageHeight ? o2.pageWidth : o2.pageHeight;
 						return n2 - n1;
@@ -59,19 +58,19 @@ public class MaxRectsPacker implements Packer {
 				});
 			} else {
 				// Sort only by width (largest to smallest) if rotation is disabled.
-				sort.sort(inputRects, new Comparator<Rect>() {
-					public int compare (Rect o1, Rect o2) {
+				sort.sort(inputRects, new Comparator<TexturePacker.Rect>() {
+					public int compare (TexturePacker.Rect o1, TexturePacker.Rect o2) {
 						return o2.pageWidth - o1.pageWidth;
 					}
 				});
 			}
 		}
 
-		Array<Page> pages = new Array<Page>();
+		Array<TexturePacker.Page> pages = new Array<TexturePacker.Page>();
 		while (inputRects.size > 0)
 
 		{
-			Page result = packPage(inputRects);
+			TexturePacker.Page result = packPage(inputRects);
 			pages.add(result);
 			inputRects = result.remainingRects;
 		}
@@ -79,7 +78,7 @@ public class MaxRectsPacker implements Packer {
 
 	}
 
-	private Page packPage (Array<Rect> inputRects) {
+	private TexturePacker.Page packPage (Array<TexturePacker.Rect> inputRects) {
 		int paddingX = settings.paddingX, paddingY = settings.paddingY;
 		float maxWidth = settings.maxWidth, maxHeight = settings.maxHeight;
 		int edgePaddingX = 0, edgePaddingY = 0;
@@ -98,7 +97,7 @@ public class MaxRectsPacker implements Packer {
 		// Find min size.
 		int minWidth = Integer.MAX_VALUE, minHeight = Integer.MAX_VALUE;
 		for (int i = 0, nn = inputRects.size; i < nn; i++) {
-			Rect rect = inputRects.get(i);
+			TexturePacker.Rect rect = inputRects.get(i);
 			minWidth = Math.min(minWidth, rect.pageWidth);
 			minHeight = Math.min(minHeight, rect.pageHeight);
 			float width = rect.pageWidth - paddingX, height = rect.pageHeight - paddingY;
@@ -129,14 +128,14 @@ public class MaxRectsPacker implements Packer {
 		if (!settings.silent) System.out.print("Packing");
 
 		// Find the minimal page size that fits all rects.
-		Page bestResult = null;
+		TexturePacker.Page bestResult = null;
 		if (settings.square) {
 			int minSize = Math.max(minWidth, minHeight);
 			int maxSize = Math.min(settings.maxWidth, settings.maxHeight);
 			BinarySearch sizeSearch = new BinarySearch(minSize, maxSize, settings.fast ? 25 : 15, settings.pot);
 			int size = sizeSearch.reset(), i = 0;
 			while (size != -1) {
-				Page result = packAtSize(true, size - edgePaddingX, size - edgePaddingY, inputRects);
+				TexturePacker.Page result = packAtSize(true, size - edgePaddingX, size - edgePaddingY, inputRects);
 				if (!settings.silent) {
 					if (++i % 70 == 0) System.out.println();
 					System.out.print(".");
@@ -157,9 +156,9 @@ public class MaxRectsPacker implements Packer {
 			int width = widthSearch.reset(), i = 0;
 			int height = settings.square ? width : heightSearch.reset();
 			while (true) {
-				Page bestWidthResult = null;
+				TexturePacker.Page bestWidthResult = null;
 				while (width != -1) {
-					Page result = packAtSize(true, width - edgePaddingX, height - edgePaddingY, inputRects);
+					TexturePacker.Page result = packAtSize(true, width - edgePaddingX, height - edgePaddingY, inputRects);
 					if (!settings.silent) {
 						if (++i % 70 == 0) System.out.println();
 						System.out.print(".");
@@ -186,17 +185,17 @@ public class MaxRectsPacker implements Packer {
 
 	/** @param fully If true, the only results that pack all rects will be considered. If false, all results are considered, not
 	 *           all rects may be packed. */
-	private Page packAtSize (boolean fully, int width, int height, Array<Rect> inputRects) {
-		Page bestResult = null;
+	private TexturePacker.Page packAtSize (boolean fully, int width, int height, Array<TexturePacker.Rect> inputRects) {
+		TexturePacker.Page bestResult = null;
 		for (FreeRectChoiceHeuristic method : methods) {
 			maxRects.init(width, height);
-			Page result;
+			TexturePacker.Page result;
 			if (!settings.fast) {
 				result = maxRects.pack(inputRects, method);
 			} else {
-				Array<Rect> remaining = new Array<Rect>();
+				Array<TexturePacker.Rect> remaining = new Array<TexturePacker.Rect>();
 				for (int ii = 0, nn = inputRects.size; ii < nn; ii++) {
-					Rect rect = inputRects.get(ii);
+					TexturePacker.Rect rect = inputRects.get(ii);
 					if (maxRects.insert(rect, method) == null) {
 						while (ii < nn)
 							remaining.add(inputRects.get(ii++));
@@ -212,7 +211,7 @@ public class MaxRectsPacker implements Packer {
 		return bestResult;
 	}
 
-	private Page getBest (Page result1, Page result2) {
+	private TexturePacker.Page getBest (TexturePacker.Page result1, TexturePacker.Page result2) {
 		if (result1 == null) return result2;
 		if (result2 == null) return result1;
 		return result1.occupancy > result2.occupancy ? result1 : result2;
@@ -255,8 +254,8 @@ public class MaxRectsPacker implements Packer {
 	class MaxRects {
 		private int binWidth;
 		private int binHeight;
-		private final Array<Rect> usedRectangles = new Array<Rect>();
-		private final Array<Rect> freeRectangles = new Array<Rect>();
+		private final Array<TexturePacker.Rect> usedRectangles = new Array<TexturePacker.Rect>();
+		private final Array<TexturePacker.Rect> freeRectangles = new Array<TexturePacker.Rect>();
 
 		public void init (int width, int height) {
 			binWidth = width;
@@ -264,7 +263,7 @@ public class MaxRectsPacker implements Packer {
 
 			usedRectangles.clear();
 			freeRectangles.clear();
-			Rect n = new Rect();
+			TexturePacker.Rect n = new TexturePacker.Rect();
 			n.pageX = 0;
 			n.pageY = 0;
 			n.pageWidth = width;
@@ -273,8 +272,8 @@ public class MaxRectsPacker implements Packer {
 		}
 
 		/** Packs a single image. Order is defined externally. */
-		public Rect insert (Rect rect, FreeRectChoiceHeuristic method) {
-			Rect newNode = scoreRect(rect, method);
+		public TexturePacker.Rect insert (TexturePacker.Rect rect, FreeRectChoiceHeuristic method) {
+			TexturePacker.Rect newNode = scoreRect(rect, method);
 			if (newNode.pageHeight == 0) return null;
 
 			int numRectanglesToProcess = freeRectangles.size;
@@ -288,7 +287,7 @@ public class MaxRectsPacker implements Packer {
 
 			pruneFreeList();
 
-			Rect bestNode = new Rect();
+			TexturePacker.Rect bestNode = new TexturePacker.Rect();
 			bestNode.set(rect);
 			bestNode.score1 = newNode.score1;
 			bestNode.score2 = newNode.score2;
@@ -303,17 +302,17 @@ public class MaxRectsPacker implements Packer {
 		}
 
 		/** For each rectangle, packs each one then chooses the best and packs that. Slow! */
-		public Page pack (Array<Rect> rects, FreeRectChoiceHeuristic method) {
-			rects = new Array<Rect>(rects);
+		public TexturePacker.Page pack (Array<TexturePacker.Rect> rects, FreeRectChoiceHeuristic method) {
+			rects = new Array<TexturePacker.Rect>(rects);
 			while (rects.size > 0) {
 				int bestRectIndex = -1;
-				Rect bestNode = new Rect();
+				TexturePacker.Rect bestNode = new TexturePacker.Rect();
 				bestNode.score1 = Integer.MAX_VALUE;
 				bestNode.score2 = Integer.MAX_VALUE;
 
 				// Find the next rectangle that packs best.
 				for (int i = 0; i < rects.size; i++) {
-					Rect newNode = scoreRect(rects.get(i), method);
+					TexturePacker.Rect newNode = scoreRect(rects.get(i), method);
 					if (newNode.score1 < bestNode.score1 || (newNode.score1 == bestNode.score1 && newNode.score2 < bestNode.score2)) {
 						bestNode.set(rects.get(i));
 						bestNode.score1 = newNode.score1;
@@ -333,27 +332,27 @@ public class MaxRectsPacker implements Packer {
 				rects.removeIndex(bestRectIndex);
 			}
 
-			Page result = getResult();
+			TexturePacker.Page result = getResult();
 			result.remainingRects = rects;
 			return result;
 		}
 
-		public Page getResult () {
+		public TexturePacker.Page getResult () {
 			int w = 0, h = 0;
 			for (int i = 0; i < usedRectangles.size; i++) {
-				Rect rect = usedRectangles.get(i);
+				TexturePacker.Rect rect = usedRectangles.get(i);
 				w = Math.max(w, rect.pageX + rect.pageWidth);
 				h = Math.max(h, rect.pageY + rect.pageHeight);
 			}
-			Page result = new Page();
-			result.outputRects = new Array<Rect>(usedRectangles);
+			TexturePacker.Page result = new TexturePacker.Page();
+			result.outputRects = new Array<TexturePacker.Rect>(usedRectangles);
 			result.occupancy = getOccupancy();
 			result.width = w;
 			result.height = h;
 			return result;
 		}
 
-		private void placeRect (Rect node) {
+		private void placeRect (TexturePacker.Rect node) {
 			int numRectanglesToProcess = freeRectangles.size;
 			for (int i = 0; i < numRectanglesToProcess; i++) {
 				if (splitFreeNode(freeRectangles.get(i), node)) {
@@ -368,14 +367,14 @@ public class MaxRectsPacker implements Packer {
 			usedRectangles.add(node);
 		}
 
-		private Rect scoreRect (Rect rect, FreeRectChoiceHeuristic method) {
+		private TexturePacker.Rect scoreRect (TexturePacker.Rect rect, FreeRectChoiceHeuristic method) {
 			int width = rect.pageWidth;
 			int height = rect.pageHeight;
 			int rotatedWidth = height - settings.paddingY + settings.paddingX;
 			int rotatedHeight = width - settings.paddingX + settings.paddingY;
 			boolean rotate = rect.canRotate() && settings.rotation;
 
-			Rect newNode = null;
+			TexturePacker.Rect newNode = null;
 			switch (method) {
 			case BestShortSideFit:
 				newNode = findPositionForNewNodeBestShortSideFit(width, height, rotatedWidth, rotatedHeight, rotate);
@@ -412,8 +411,8 @@ public class MaxRectsPacker implements Packer {
 			return (float)usedSurfaceArea / (binWidth * binHeight);
 		}
 
-		private Rect findPositionForNewNodeBottomLeft (int width, int height, int rotatedWidth, int rotatedHeight, boolean rotate) {
-			Rect bestNode = new Rect();
+		private TexturePacker.Rect findPositionForNewNodeBottomLeft (int width, int height, int rotatedWidth, int rotatedHeight, boolean rotate) {
+			TexturePacker.Rect bestNode = new TexturePacker.Rect();
 
 			bestNode.score1 = Integer.MAX_VALUE; // best y, score2 is best x
 
@@ -447,9 +446,9 @@ public class MaxRectsPacker implements Packer {
 			return bestNode;
 		}
 
-		private Rect findPositionForNewNodeBestShortSideFit (int width, int height, int rotatedWidth, int rotatedHeight,
-			boolean rotate) {
-			Rect bestNode = new Rect();
+		private TexturePacker.Rect findPositionForNewNodeBestShortSideFit (int width, int height, int rotatedWidth, int rotatedHeight,
+                                                                           boolean rotate) {
+			TexturePacker.Rect bestNode = new TexturePacker.Rect();
 			bestNode.score1 = Integer.MAX_VALUE;
 
 			for (int i = 0; i < freeRectangles.size; i++) {
@@ -493,9 +492,9 @@ public class MaxRectsPacker implements Packer {
 			return bestNode;
 		}
 
-		private Rect findPositionForNewNodeBestLongSideFit (int width, int height, int rotatedWidth, int rotatedHeight,
-			boolean rotate) {
-			Rect bestNode = new Rect();
+		private TexturePacker.Rect findPositionForNewNodeBestLongSideFit (int width, int height, int rotatedWidth, int rotatedHeight,
+                                                                          boolean rotate) {
+			TexturePacker.Rect bestNode = new TexturePacker.Rect();
 
 			bestNode.score2 = Integer.MAX_VALUE;
 
@@ -538,9 +537,9 @@ public class MaxRectsPacker implements Packer {
 			return bestNode;
 		}
 
-		private Rect findPositionForNewNodeBestAreaFit (int width, int height, int rotatedWidth, int rotatedHeight,
-			boolean rotate) {
-			Rect bestNode = new Rect();
+		private TexturePacker.Rect findPositionForNewNodeBestAreaFit (int width, int height, int rotatedWidth, int rotatedHeight,
+                                                                      boolean rotate) {
+			TexturePacker.Rect bestNode = new TexturePacker.Rect();
 
 			bestNode.score1 = Integer.MAX_VALUE; // best area fit, score2 is best short side fit
 
@@ -606,9 +605,9 @@ public class MaxRectsPacker implements Packer {
 			return score;
 		}
 
-		private Rect findPositionForNewNodeContactPoint (int width, int height, int rotatedWidth, int rotatedHeight,
-			boolean rotate) {
-			Rect bestNode = new Rect();
+		private TexturePacker.Rect findPositionForNewNodeContactPoint (int width, int height, int rotatedWidth, int rotatedHeight,
+                                                                       boolean rotate) {
+			TexturePacker.Rect bestNode = new TexturePacker.Rect();
 
 			bestNode.score1 = -1; // best contact score
 
@@ -641,7 +640,7 @@ public class MaxRectsPacker implements Packer {
 			return bestNode;
 		}
 
-		private boolean splitFreeNode (Rect freeNode, Rect usedNode) {
+		private boolean splitFreeNode (TexturePacker.Rect freeNode, TexturePacker.Rect usedNode) {
 			// Test with SAT if the rectangles even intersect.
 			if (usedNode.pageX >= freeNode.pageX + freeNode.pageWidth || usedNode.pageX + usedNode.pageWidth <= freeNode.pageX
 				|| usedNode.pageY >= freeNode.pageY + freeNode.pageHeight || usedNode.pageY + usedNode.pageHeight <= freeNode.pageY) return false;
@@ -649,14 +648,14 @@ public class MaxRectsPacker implements Packer {
 			if (usedNode.pageX < freeNode.pageX + freeNode.pageWidth && usedNode.pageX + usedNode.pageWidth > freeNode.pageX) {
 				// New node at the top side of the used node.
 				if (usedNode.pageY > freeNode.pageY && usedNode.pageY < freeNode.pageY + freeNode.pageHeight) {
-					Rect newNode = new Rect(freeNode);
+					TexturePacker.Rect newNode = new TexturePacker.Rect(freeNode);
 					newNode.pageHeight = usedNode.pageY - newNode.pageY;
 					freeRectangles.add(newNode);
 				}
 
 				// New node at the bottom side of the used node.
 				if (usedNode.pageY + usedNode.pageHeight < freeNode.pageY + freeNode.pageHeight) {
-					Rect newNode = new Rect(freeNode);
+					TexturePacker.Rect newNode = new TexturePacker.Rect(freeNode);
 					newNode.pageY = usedNode.pageY + usedNode.pageHeight;
 					newNode.pageHeight = freeNode.pageY + freeNode.pageHeight - (usedNode.pageY + usedNode.pageHeight);
 					freeRectangles.add(newNode);
@@ -666,14 +665,14 @@ public class MaxRectsPacker implements Packer {
 			if (usedNode.pageY < freeNode.pageY + freeNode.pageHeight && usedNode.pageY + usedNode.pageHeight > freeNode.pageY) {
 				// New node at the left side of the used node.
 				if (usedNode.pageX > freeNode.pageX && usedNode.pageX < freeNode.pageX + freeNode.pageWidth) {
-					Rect newNode = new Rect(freeNode);
+					TexturePacker.Rect newNode = new TexturePacker.Rect(freeNode);
 					newNode.pageWidth = usedNode.pageX - newNode.pageX;
 					freeRectangles.add(newNode);
 				}
 
 				// New node at the right side of the used node.
 				if (usedNode.pageX + usedNode.pageWidth < freeNode.pageX + freeNode.pageWidth) {
-					Rect newNode = new Rect(freeNode);
+					TexturePacker.Rect newNode = new TexturePacker.Rect(freeNode);
 					newNode.pageX = usedNode.pageX + usedNode.pageWidth;
 					newNode.pageWidth = freeNode.pageX + freeNode.pageWidth - (usedNode.pageX + usedNode.pageWidth);
 					freeRectangles.add(newNode);
@@ -711,7 +710,7 @@ public class MaxRectsPacker implements Packer {
 				}
 		}
 
-		private boolean isContainedIn (Rect a, Rect b) {
+		private boolean isContainedIn (TexturePacker.Rect a, TexturePacker.Rect b) {
 			return a.pageX >= b.pageX && a.pageY >= b.pageY && a.pageX + a.pageWidth <= b.pageX + b.pageWidth && a.pageY + a.pageHeight <= b.pageY + b.pageHeight;
 		}
 	}
@@ -729,8 +728,8 @@ public class MaxRectsPacker implements Packer {
 		ContactPointRule
 	}
 
-	class RectComparator implements Comparator<Rect> {
-		public int compare (Rect o1, Rect o2) {
+	class RectComparator implements Comparator<TexturePacker.Rect> {
+		public int compare (TexturePacker.Rect o1, TexturePacker.Rect o2) {
 			return o1.source.compareTo(o2.source);
 		}
 	}

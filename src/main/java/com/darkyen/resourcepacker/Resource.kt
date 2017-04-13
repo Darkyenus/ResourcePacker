@@ -304,6 +304,7 @@ sealed class Resource {
         }
 
         fun ResourceFile.isImage():Boolean = extension == "png" || extension == "jpg" || extension == "jpeg" || extension == "gif"
+        fun ResourceFile.isVectorImage():Boolean = extension == "svg"
         fun ResourceFile.isFont():Boolean = extension == "ttf" || extension == "otf"
     }
 }

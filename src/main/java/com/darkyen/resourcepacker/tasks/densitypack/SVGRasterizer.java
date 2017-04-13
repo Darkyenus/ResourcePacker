@@ -1,4 +1,4 @@
-package darkyenus.resourcepacker.tasks.densitypack;
+package com.darkyen.resourcepacker.tasks.densitypack;
 
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.StreamUtils;

@@ -1,5 +1,7 @@
 package com.darkyen.resourcepacker.tasks
 
+import com.darkyen.resourcepacker.tasks.densitypack.DensityPackTask
+
 /**
  * Collection of all tasks from this package in logical order.
  */

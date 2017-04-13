@@ -14,7 +14,7 @@
  * limitations under the License.
  ******************************************************************************/
 
-package darkyenus.resourcepacker.tasks.densitypack;
+package com.darkyen.resourcepacker.tasks.densitypack;
 
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Pixmap.Format;

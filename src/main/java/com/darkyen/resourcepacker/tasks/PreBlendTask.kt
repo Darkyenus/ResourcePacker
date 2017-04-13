@@ -10,13 +10,13 @@ import java.awt.Color
 /**
  * Renders image onto background of given color.
  *
- * {{{
+ * ```
  *   Input flags:
  *
  *   .#RRGGBB.
  *
  *   CC colors are in hexa
- * }}}
+ * ```
  *
  * @example
  * `.#FFFFFF.` would put a white background on the image
@@ -38,15 +38,13 @@ object PreBlendTask : Task() {
      * @return whether the operation did something or not */
     override fun operate(file: ResourceFile): Boolean {
         if (file.isImage()) {
-            for (flag in file.flags) {
-                val (r, g, b) = PreBlendRegex.matchEntire(flag)?.destructured ?: continue
+            file.flags.matchFirst(PreBlendRegex) { (r,g,b) ->
                 val color = Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16))
                 val output = newFile(file)
                 Files.copy(file.file, output)
                 preBlendImage(output, color, ninepatch = file.flags.contains("9"))
                 file.file = output
                 return true
-
             }
         }
 
