@@ -74,8 +74,7 @@ object PackTask : Task() {
         }
 
         val packer = TexturePacker(settings)
-        for (image in directory.files) {
-            if (!image.isImage()) continue
+        directory.forEachFile(filter = {it.isImage()}) { image ->
             val bufferedImage = ImageIO.read(image.file)
             if (bufferedImage == null) {
                 Log.error(Name, "Image could not be loaded. " + image)

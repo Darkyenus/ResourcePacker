@@ -26,7 +26,7 @@ object FlattenTask : Task() {
         //Grandparent will no longer acknowledge this child and take all his children. Harsh.
         val grandparent = directory.parent
         grandparent.removeChild(directory)
-        directory.forEachChild { child ->
+        directory.forEach { child ->
             directory.removeChild(child)
             grandparent.addChild(child)
         }

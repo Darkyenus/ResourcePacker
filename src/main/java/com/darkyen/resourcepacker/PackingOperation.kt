@@ -25,22 +25,21 @@ class PackingOperation(val from: File, val to: File,
             Log.error("ResourcePacker", "${root.canonicalPath} is not a directory.")
             return null
         }
-        val result = Resource.ResourceDirectory(root, null)
-        result.parent = result
-        result.create()
+        val result = Resource.ResourceDirectory(root, null, root.canonicalPath)
+        result.addResourceChildrenFromFilesystem()
         return result
     }
 
     private fun prepareOutputDirectory(janitor: OperationJanitor, to: File) {
         janitor.clearFolder(to)
         if (!to.exists() && !to.mkdirs()) {
-            Log.warn("ResourcePacker", "Output directory at \"" + to.canonicalPath + "\" could not be created. Assuming it's fine.")
+            Log.warn("ResourcePacker", "Output directory at \"${to.canonicalPath}\" could not be created. Assuming it's fine.")
         }
     }
 
     private fun logVirtualTreeAfter(after: Task, tree: Resource.ResourceDirectory) {
         if (Log.DEBUG) {
-            Log.debug("PackingOperation", "After running " + after.Name + ", virtual filesystem looks like this:")
+            Log.debug("PackingOperation", "After running ${after.Name}, virtual filesystem looks like this:")
             val sb = StringBuilder()
             sb.append('\n') //Logger already prints something on the line, so this makes it even
             tree.toPrettyString(sb, 1)
@@ -54,7 +53,7 @@ class PackingOperation(val from: File, val to: File,
     override fun invoke() {
         val startTime = System.currentTimeMillis()
         val root = createTree(this.from) ?: return
-        Log.info("ResourcePacker", "Starting packing operation from \"" + this.from.getCanonicalPath() + "\" to \"" + this.to.getCanonicalPath() + "\"")
+        Log.info("ResourcePacker", "Starting packing operation from \"${this.from.canonicalPath}\" to \"${this.to.canonicalPath}\"")
 
         if (root.flags.isNotEmpty()) Log.warn("ResourcePacker", "Flags of root will not be processed.")
 

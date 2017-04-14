@@ -39,7 +39,7 @@ object CreateAppleStringsTask : Task() {
         if (directory.flags.contains(CreateStringsFlag)) {
             val strings = StringBuilder()
 
-            for (stringFile in directory.files) {
+            directory.forEachFile { stringFile ->
                 val content = Files.toString(stringFile.file, Charsets.UTF_8)
                 strings.append('"').append(escape(stringFile.name)).append("\" = \"").append(escape(content)).append("\";\n")
             }

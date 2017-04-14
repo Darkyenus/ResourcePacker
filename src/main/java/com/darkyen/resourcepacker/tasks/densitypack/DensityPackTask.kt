@@ -122,8 +122,7 @@ object DensityPackTask : Task() {
             settings.scales = scales.toArray()
 
             val packer = TexturePacker(settings)
-            for (image in directory.files) {
-                if (!image.isImage() && !image.isVectorImage()) continue
+            directory.forEachFile(filter = {it.isImage() || it.isVectorImage()}) { image ->
                 var name = image.name
                 var scale = 1
 

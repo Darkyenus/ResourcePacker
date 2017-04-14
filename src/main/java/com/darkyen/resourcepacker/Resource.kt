@@ -1,5 +1,6 @@
 package com.darkyen.resourcepacker
 
+import com.badlogic.gdx.utils.SnapshotArray
 import com.badlogic.gdx.utils.Array as GdxArray
 import com.darkyen.resourcepacker.util.SnapshotArrayList
 import com.esotericsoftware.minlog.Log
@@ -26,7 +27,7 @@ sealed class Resource {
         parent.removeChild(this)
     }
 
-    class ResourceDirectory(var directory: File, parent: ResourceDirectory?) : Resource() {
+    class ResourceDirectory(var directory: File, parent: ResourceDirectory?, private val pathPrefix:String? = null) : Resource() {
 
         override var parent: ResourceDirectory = parent ?: this
 
@@ -45,27 +46,37 @@ sealed class Resource {
         private val removedChildDirectories = GdxArray<ResourceDirectory>(false, 16, ResourceDirectory::class.java)
         private val removedChildFiles = GdxArray<ResourceFile>(false, 16, ResourceFile::class.java)
 
-        val files: List<ResourceFile>
-            get() = childFiles
-
+        /**
+         * List of all directories currently present in this virtual directory.
+         * Do not iterate over this list if you want to call add/remove child on this directory while iterating!!!
+         * For that, use [forEachDirectory] instead.
+         */
         val directories: List<ResourceDirectory>
             get() = childDirectories
 
-        fun hasChildren(): Boolean = childDirectories.isNotEmpty() || childFiles.isNotEmpty()
+        /**
+         * List of all files currently present in this virtual directory.
+         * Do not iterate over this list if you want to call add/remove child on this directory while iterating!!!
+         * For that, use [forEachFile] instead.
+         */
+        val files: List<ResourceFile>
+            get() = childFiles
 
-        fun removeChild(file: ResourceFile) {
-            if (childFiles.removeValue(file, true)) {
-                removedChildFiles.add(file)
-            } else {
-                System.err.println("WARN: Removing file which doesn't exist: $file")
-            }
-        }
+        fun hasChildren(): Boolean = childDirectories.isNotEmpty() || childFiles.isNotEmpty()
 
         fun removeChild(dir: ResourceDirectory) {
             if (childDirectories.removeValue(dir, true)) {
                 removedChildDirectories.add(dir)
             } else {
-                System.err.println("WARN: Removing directory which doesn't exist: $dir")
+                Log.warn("Removing directory which doesn't exist: $dir")
+            }
+        }
+
+        fun removeChild(file: ResourceFile) {
+            if (childFiles.removeValue(file, true)) {
+                removedChildFiles.add(file)
+            } else {
+                Log.warn("Removing file which doesn't exist: $file")
             }
         }
 
@@ -78,23 +89,71 @@ sealed class Resource {
             }
         }
 
-        @Deprecated("Too slow")
-        fun children(): Set<Resource> {
-            val result = HashSet<Resource>()
-            result.addAll(childFiles)
-            result.addAll(childDirectories)
-            return result
+        inline fun forEachDirectory(action:(ResourceDirectory) -> Unit) {
+            @Suppress("UNCHECKED_CAST")
+            val directories = directories as SnapshotArray<ResourceDirectory>
+            val array = directories.begin()
+            val size = directories.size
+            try {
+                for (i in 0..(size-1)) {
+                    action(array[i])
+                }
+            } finally {
+                directories.end()
+            }
         }
 
-        inline fun forEachChild(action: (Resource) -> Unit) {
-            files.forEach(action)
-            directories.forEach(action)
+        inline fun forEachDirectory(filter:(ResourceDirectory) -> Boolean, action:(ResourceDirectory) -> Unit) {
+            @Suppress("UNCHECKED_CAST")
+            val directories = directories as SnapshotArray<ResourceDirectory>
+            val array = directories.begin()
+            val size = directories.size
+            try {
+                for (i in 0..(size-1)) {
+                    val item = array[i]
+                    if (filter(item)) {
+                        action(array[i])
+                    }
+                }
+            } finally {
+                directories.end()
+            }
         }
 
-        fun addChild(file: ResourceFile): ResourceFile {
-            childFiles.add(file)
-            file.parent = this
-            return file
+        inline fun forEachFile(action:(ResourceFile) -> Unit) {
+            @Suppress("UNCHECKED_CAST")
+            val files = files as SnapshotArray<ResourceFile>
+            val array = files.begin()
+            val size = files.size
+            try {
+                for (i in 0..(size-1)) {
+                    action(array[i])
+                }
+            } finally {
+                files.end()
+            }
+        }
+
+        inline fun forEachFile(filter:(ResourceFile) -> Boolean, action:(ResourceFile) -> Unit) {
+            @Suppress("UNCHECKED_CAST")
+            val files = files as SnapshotArray<ResourceFile>
+            val array = files.begin()
+            val size = files.size
+            try {
+                for (i in 0..(size-1)) {
+                    val item = array[i]
+                    if (filter(item)) {
+                        action(array[i])
+                    }
+                }
+            } finally {
+                files.end()
+            }
+        }
+
+        inline fun forEach(action: (Resource) -> Unit) {
+            forEachDirectory(action)
+            forEachFile(action)
         }
 
         fun addChild(file: ResourceDirectory): ResourceDirectory {
@@ -103,11 +162,17 @@ sealed class Resource {
             return file
         }
 
+        fun addChild(file: ResourceFile): ResourceFile {
+            childFiles.add(file)
+            file.parent = this
+            return file
+        }
+
         fun addChild(res: Resource): Resource {
             return when (res) {
-                is ResourceFile ->
-                    addChild(res)
                 is ResourceDirectory ->
+                    addChild(res)
+                is ResourceFile ->
                     addChild(res)
             }
         }
@@ -122,7 +187,7 @@ sealed class Resource {
                     val dir = ResourceDirectory(javaFile, this)
                     childDirectories.add(dir)
                     if (createStructure) {
-                        dir.create()
+                        dir.addResourceChildrenFromFilesystem()
                     }
                     return dir
                 }
@@ -132,6 +197,10 @@ sealed class Resource {
                 }
                 return null
             }
+        }
+
+        fun getChildDirectory(name: String): ResourceDirectory? {
+            return childDirectories.find { it.name == name } ?: removedChildDirectories.find { it.name == name }
         }
 
         fun getChildFile(name: String): ResourceFile? {
@@ -150,21 +219,29 @@ sealed class Resource {
             }
         }
 
-        fun getChildDirectory(name: String): ResourceDirectory? {
-            return childDirectories.find { it.name == name } ?: removedChildDirectories.find { it.name == name }
-        }
-
-        @Deprecated("TODO: Rename to something more meaningful")
-        fun create() {
+        fun addResourceChildrenFromFilesystem() {
             for (file in directory.listFiles()) {
                 addChild(file, createStructure = true)
+            }
+        }
+
+        internal fun stripWorkingDirectoryPath(path:String):String {
+            var root = this
+            while (root.parent != root) {
+                root = root.parent
+            }
+            val prefix = root.pathPrefix ?: return path
+            if (path.startsWith(prefix)) {
+                return "#"+path.substring(prefix.length)
+            } else {
+                return path
             }
         }
 
         override fun toString(): String {
             val builder = StringBuilder()
             builder.append("Dir: ")
-            builder.append(directory.canonicalPath) //TODO .replace(Task.TempFolderPath,"$TMP")
+            builder.append(stripWorkingDirectoryPath(directory.canonicalPath))
             builder.append(" (")
             builder.append(name)
             for (flag in flags) {
@@ -268,7 +345,7 @@ sealed class Resource {
 
         override fun toString(): String {
             val builder = StringBuilder()
-            builder.append(file.canonicalPath) //TODO .replace(Task.TempFolderPath,"$TMP")
+            builder.append(parent.stripWorkingDirectoryPath(file.canonicalPath))
             builder.append(" (")
             builder.append(name)
             for (flag in flags) {
