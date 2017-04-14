@@ -13,7 +13,6 @@ import com.darkyen.resourcepacker.util.preBlendImage
 import com.esotericsoftware.minlog.Log
 import com.google.common.io.Files
 import org.apache.batik.transcoder.SVGAbstractTranscoder
-import java.awt.Color
 import java.io.FileReader
 
 /**
@@ -47,7 +46,7 @@ object DensityPackTask : Task() {
      * #FF0056
      * to capture groups RR GG BB
      */
-    val PreBlendRegex = Regex("#([0-9A-Fa-f][0-9A-Fa-f])([0-9A-Fa-f][0-9A-Fa-f])([0-9A-Fa-f][0-9A-Fa-f])")
+    val PreBlendRegex = Regex("#$ColorRegexGroup")
 
     val ScalesRegex = Regex("@([1-9]+[0-9]*)x")
 
@@ -156,9 +155,9 @@ object DensityPackTask : Task() {
             val outputFolder = newFolder()
             packer.pack(outputFolder, atlasName)
 
-            val preBlendColor = directory.flags.matchFirst(PreBlendRegex) { (r, g, b) ->
+            val preBlendColor = directory.flags.matchFirst(PreBlendRegex) { (color) ->
                 if (Log.DEBUG) Log.debug(Name, "Blending color for atlas set. " + atlasName)
-                Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16))
+                parseHexColor(color).toAwt()
             }
 
             for (outputJavaFile in outputFolder.listFiles()) {
