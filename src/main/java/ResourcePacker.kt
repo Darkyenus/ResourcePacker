@@ -1,3 +1,6 @@
+@file:JvmName("ResourcePacker")
+@file:JvmMultifileClass
+
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration

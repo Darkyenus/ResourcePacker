@@ -9,11 +9,12 @@ import java.io.File
  *
  * @author Darkyen
  */
-class PackingOperation(val from: File, val to: File,
+class PackingOperation @JvmOverloads constructor(val from: File, val to: File,
                        val settings: List<Setting<*>> = emptyList(),
                        val tasks: List<Task> = DefaultTasks,
                        val workingRootProvider: WorkingRootProvider = TemporaryWorkingRootProvider) : () -> Unit {
 
+    @JvmOverloads
     constructor(from: String, to: String,
                 settings: List<Setting<*>> = emptyList(),
                 tasks: List<Task> = DefaultTasks,
