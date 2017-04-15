@@ -139,7 +139,9 @@ object CreateIOSIconTask : Task() {
                 return false
             }
 
-            val transitiveFlags = file.flags.filterNot {
+
+
+            val transitiveFlags = file.copyFlagsExcept {
                 it.startsWith(UniversalFlag) || it.startsWith(iPhoneFlag) || it.startsWith(iPadFlag)
             }
 
@@ -148,9 +150,9 @@ object CreateIOSIconTask : Task() {
             for ((size, filename, stripExtension) in iconTypes) {
                 if (file.parent.files.find { it.name == filename } == null) {
                     val flags = ArrayList<String>()
-                    flags.addAll(transitiveFlags)
                     flags.add("rasterize")
                     flags.add("${size}x$size")
+                    flags.addAll(transitiveFlags)
                     val singleIconFile = ResourceFile(file.file, file.parent, filename, flags, RasterizeTask.SVGExtension)
                     file.parent.addChild(singleIconFile)
 

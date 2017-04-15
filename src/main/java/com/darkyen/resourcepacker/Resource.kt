@@ -17,6 +17,8 @@ sealed class Resource {
 
     abstract val name: String
 
+    abstract val flags:List<String>
+
     /**
      * Runs given task on itself and children, recursively.
      * @return whether or not it succeeded at least once (on me or someone else)
@@ -27,12 +29,22 @@ sealed class Resource {
         parent.removeChild(this)
     }
 
+    fun copyFlags():ArrayList<String> = ArrayList<String>(flags.size+2).apply {addAll(flags)}
+
+    inline fun copyFlagsExcept(remove:(String)->Boolean):ArrayList<String> = ArrayList<String>(flags.size+2).apply {
+        for (flag in flags) {
+            if (!remove(flag)) {
+                add(flag)
+            }
+        }
+    }
+
     class ResourceDirectory(var directory: File, parent: ResourceDirectory?, private val pathPrefix:String? = null) : Resource() {
 
         override var parent: ResourceDirectory = parent ?: this
 
         override val name: String
-        val flags: List<String>
+        override val flags: List<String>
 
         init {
             val parsedName = parseName(directory.name, false)
@@ -325,7 +337,7 @@ sealed class Resource {
             file: File,
             override var parent: ResourceDirectory,
             override val name: String,
-            val flags: List<String>,
+            override val flags: List<String>,
             val extension: String) : Resource() {
 
         var file: File = file
