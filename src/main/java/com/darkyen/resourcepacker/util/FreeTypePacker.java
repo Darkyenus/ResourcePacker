@@ -408,7 +408,7 @@ public class FreeTypePacker {
          */
         public Color color = Color.WHITE;
         /**
-         * Glyph gamma. Values > 1 reduce antialiasing.
+         * Glyph gamma. Values &gt; 1 reduce antialiasing.
          */
         public float gamma = 1.8f;
         /**
@@ -420,7 +420,7 @@ public class FreeTypePacker {
          */
         public float borderWidth = 0;
         /**
-         * Border color; only used if borderWidth > 0
+         * Border color; only used if borderWidth &gt; 0
          */
         public Color borderColor = Color.BLACK;
         /**
@@ -428,7 +428,7 @@ public class FreeTypePacker {
          */
         public boolean borderStraight = false;
         /**
-         * Values < 1 increase the border size.
+         * Values &lt; 1 increase the border size.
          */
         public float borderGamma = 1.8f;
         /**
@@ -440,7 +440,7 @@ public class FreeTypePacker {
          */
         public int shadowOffsetY = 0;
         /**
-         * Shadow color; only used if shadowOffset > 0
+         * Shadow color; only used if shadowOffset &gt; 0
          */
         public Color shadowColor = new Color(0, 0, 0, 0.75f);
         /**

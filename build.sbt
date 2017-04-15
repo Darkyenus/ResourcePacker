@@ -7,7 +7,9 @@ version := "2.0-SNAPSHOT"
 
 startYear := Some(2014)
 
-javacOptions ++= Seq("-source","7","-target","8")
+javacOptions ++= Seq("-source", "7", "-target", "7", "-g")
+
+javacOptions in doc := Seq("-source", "7")
 
 val gdxVersion = "1.9.6"
 
@@ -32,9 +34,5 @@ libraryDependencies ++= Seq(
 )
 
 fork in Test := true
-
-//javaOptions in Test += "-XstartOnFirstThread"
-
-javacOptions += "-g"
 
 javaOptions in Test += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
