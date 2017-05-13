@@ -1,11 +1,11 @@
 package com.darkyen.resourcepacker
 
 import com.badlogic.gdx.utils.SnapshotArray
-import com.badlogic.gdx.utils.Array as GdxArray
 import com.darkyen.resourcepacker.util.SnapshotArrayList
 import com.esotericsoftware.minlog.Log
 import com.google.common.io.Files
 import java.io.File
+import com.badlogic.gdx.utils.Array as GdxArray
 
 /**
 
@@ -293,7 +293,7 @@ sealed class Resource {
             return wasSuccessful
         }
 
-        fun copyYourself(folder: File, useFolderAsRoot: Boolean = false) {
+        fun copyYourself(folder: File, useFolderAsRoot: Boolean = false, preferSymlinks:Boolean = false) {
             val myFolder = if (useFolderAsRoot) folder
             else {
                 val result = File(folder, name)
@@ -301,10 +301,10 @@ sealed class Resource {
                 result
             }
             for (file in childFiles) {
-                file.copyYourself(myFolder)
+                file.copyYourself(myFolder, preferSymlinks)
             }
             for (dir in childDirectories) {
-                dir.copyYourself(myFolder, false)
+                dir.copyYourself(myFolder, false, preferSymlinks)
             }
         }
 
@@ -368,8 +368,30 @@ sealed class Resource {
             return builder.toString()
         }
 
-        fun copyYourself(folder: File) {
-            Files.copy(file, File(folder, simpleName))
+        fun copyYourself(folder: File, preferSymlinks:Boolean = false) {
+            val createdFile = File(folder, simpleName)
+
+            if (preferSymlinks) {
+                // Determine if symlinking is possible for this file
+                var parent = parent
+                while (parent.parent != parent) {
+                    parent = parent.parent
+                }
+
+                val myPath = file.canonicalPath
+                val resourceDirPath = parent.directory.canonicalPath
+                if (myPath.startsWith(resourceDirPath)) {
+                    // This file is still inside the resource directory, symlinking is meaningful!
+                    try {
+                        java.nio.file.Files.createSymbolicLink(createdFile.toPath(), file.canonicalFile.toPath())
+                        return
+                    } catch (ex:Exception) {
+                        Log.warn("Failed to symlink $file to $createdFile, file will be copied", ex)
+                    }
+                }
+            }
+
+            Files.copy(file, createdFile)
         }
 
         /**

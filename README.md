@@ -21,7 +21,7 @@ have directory named `Settings."bundle"`.
 
 Directories follow similar pattern, there is just no `.extension`.
 
-See testresources directory for examples.
+See `testresources` directory for examples.
 
 ## Default tasks ##
 
@@ -164,6 +164,8 @@ TaskKey[Unit]("packResources") := {
 ```
 1. Now you can run `sbt packResources`. That will pack contents of folder `resources` to `assets` in project's root directory.
 
-_Note: A tiny window will be displayed during packing, that is normal, packer needs it for GL context, it will hopefully be gone in future releases._
+_Note: UI icon may appear during packing, that is normal, packer needs it for GL context._
 
-_Another note: Jitpack builds it using Scala 2.10 - default for sbt build scripts - and does not support cross compiling. If you use different Scala version for your sbt, you will probably have to cross compile it yourself._
+## Tips ##
+- Use `PreferSymlinks` setting during development for faster packing or to eliminate the need to repack when editing
+	files that don't need packing, such as shaders.

@@ -6,7 +6,7 @@ package com.darkyen.resourcepacker
  * @example
  * {{{
  *  //In Task
- *  val PageSize = new SettingKey[Int]("PageSize",1024,"Page size is the size of the page")
+ *  val PageSize = SettingKey<Int>("PageSize",1024,"Page size is the size of the page")
  *
  *  //In creating packing operation
  *  ... settings = Seq(PageSize := 56, SomethingElse := true, ...) ...

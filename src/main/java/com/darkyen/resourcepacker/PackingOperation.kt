@@ -90,13 +90,20 @@ class PackingOperation @JvmOverloads constructor(val from: File, val to: File,
             }
         }
 
+        val preferSymlinks = PreferSymlinks.get()
+
         for (setting in this.settings) {
             setting.reset()
         }
 
-        root.copyYourself(this.to, useFolderAsRoot = true)
+        root.copyYourself(this.to, useFolderAsRoot = true, preferSymlinks = preferSymlinks)
 
         janitor.dispose()
         Log.info("ResourcePacker", "Packing operation done (in " + "%.2f".format((System.currentTimeMillis() - startTime) / 1000f) + "s)")
     }
 }
+
+val PreferSymlinks = SettingKey("PreferSymlinks", false,
+        "Instructs packing operation to symlink files instead of copying them. " +
+                "This is possible only on systems that support symlinks and only for files, " +
+                "that still after packing point into the original resources directory.")
