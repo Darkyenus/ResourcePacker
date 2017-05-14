@@ -52,7 +52,7 @@ object CreateAppleStringsTask : Task() {
             val resourceFile = ResourceFile(
                     resultJavaFile, directory.parent,
                     directory.name,
-                    directory.flags.filterNot { it == CreateStringsFlag },
+                    directory.flags.filterNot { it == CreateStringsFlag }.toMutableList(),
                     "strings")
             directory.parent.addChild(resourceFile)
 
