@@ -7,6 +7,7 @@ import com.darkyen.resourcepacker.tasks.densitypack.DensityPackTask
  */
 val DefaultTasks = listOf(
         IgnoreTask,
+        TransitiveFlagTask,
         CreateIOSIconTask,
         CreateAppleStringsTask,
         CreateFontsTask,

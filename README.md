@@ -31,6 +31,11 @@ There is a couple of tasks that run by default in following order (order is impo
 Removes files and folders with `ignore` flag. Useful when you want to keep some (for example .gimp)
 files in your resources directory but you don't want to export them.
 
+### TransitiveFlagTask
+Directories with flag `* <flag>` will transition that flag to direct children files and directories.
+Other variants are `** <flag>` to transition that flag to ALL children files and `*N <flag>` to transition that flag
+to N levels of directories (`* <flag>` == `*1 <flag>`).
+
 ### CreateIOSIconTask
 iOS requires quite a lot different icons of different sizes to be created (18 in total in some extreme cases!),
 which is very tedious and boring.

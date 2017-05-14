@@ -44,7 +44,7 @@ sealed class Resource {
         override var parent: ResourceDirectory = parent ?: this
 
         override val name: String
-        override val flags: List<String>
+        override val flags: MutableList<String>
 
         init {
             val parsedName = parseName(directory.name, false)
@@ -337,7 +337,7 @@ sealed class Resource {
             file: File,
             override var parent: ResourceDirectory,
             override val name: String,
-            override val flags: List<String>,
+            override val flags: MutableList<String>,
             val extension: String) : Resource() {
 
         var file: File = file
@@ -348,7 +348,7 @@ sealed class Resource {
                 return field
             }
 
-        private constructor(file: File, parent: ResourceDirectory, parseName: Triple<String, List<String>, String>) : this(file, parent, parseName.first, parseName.second, parseName.third)
+        private constructor(file: File, parent: ResourceDirectory, parseName: Triple<String, MutableList<String>, String>) : this(file, parent, parseName.first, parseName.second, parseName.third)
 
         constructor(file: File, parent: ResourceDirectory) : this(file, parent, parseName(file.name, true))
 
@@ -407,7 +407,7 @@ sealed class Resource {
         /**
          * Parse file/directory name into name, flags and extension, if requested and present
          */
-        fun parseName(fileName: String, withExtension: Boolean): Triple<String, List<String>, String> {
+        fun parseName(fileName: String, withExtension: Boolean): Triple<String, MutableList<String>, String> {
             val name = StringBuilder()
             val flags = ArrayList<String>()
             val extension: String
