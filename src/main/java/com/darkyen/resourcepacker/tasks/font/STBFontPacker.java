@@ -41,7 +41,7 @@ public class STBFontPacker {
 		}
 	}
 
-	public static List<File> packFont (File font, File outDir, int sizePx, boolean binary) {
+	public static List<File> packFont (File font, String fontName, File outDir, int sizePx, boolean binary) {
 		final STBTTFontinfo fontInfo = STBTTFontinfo.malloc();
 		final ByteBuffer fontByteData = loadFont(font);
 		if (!stbtt_InitFont(fontInfo, fontByteData, stbtt_GetFontOffsetForIndex(fontByteData, 0)))
@@ -82,15 +82,6 @@ public class STBFontPacker {
 			final Rectangle pack = packer.pack(name, pixmap);
 			glyph.page = packer.getPageIndex(name);
 			glyph.packed = pack;
-		}
-
-		final String fontName;
-
-		{
-			final String fileName = font.getName();
-			int separator = fileName.lastIndexOf('.');
-			if (separator == -1) separator = fileName.length();
-			fontName = fileName.substring(0, separator);
 		}
 
 		if (binary) {
@@ -152,26 +143,32 @@ public class STBFontPacker {
 
     /**
      * <code>
-     * u-byte pages;
+     * unsigned byte pages;
      * [pages]{
      *     UTF pagePath; //Relative to fontFile
      * };
-     * float lineHeight;
-     * float ascent; //Real ascent, not just to the top of glyph
-     * float descent; //From baseline down
+     * short lineGap; //Gap between two lines
+     * short ascent; //Offset from baseline down to lower part of glyph (negative)
+     * short descent; //From baseline down
      *
      * int amountOfGlyphs;
      * [amountOfGlyphs] {
      *     int codePoint;
-     *     u-byte page;
-     *     unsigned short pageX, pageY, pageWidth, pageHeight; //Coordinates on page
-     *     unsigned short offsetX, offsetY, xAdvance;
+     *     unsigned byte page;
+     *     unsigned short pageX, pageY, pageWidth, pageHeight;
+     *     short offsetX, offsetY;
+	 *     short xAdvance, leftSideBearing;
      * };
+	 *
+	 * // pageX/Y/Width/Height are pixel coordinates on the bitmap page
+	 * // offsetX/offsetY are offsets in pixel space from the glyph origin to the top-left of the bitmap
+	 * // leftSideBearing is the offset from the current horizontal position to the left edge of the character
+	 * // advanceWidth is the offset from the current horizontal position to the next horizontal position
      * </code>
      */
     private static List<File> outputSTBFont(File outDir, String fontName, FontMetrics fontMetrics, PixmapPacker packer, Array<GlyphData> glyphs){
 		final ArrayList<File> resultFiles = new ArrayList<>();
-		final File sbtFontFile = new File(outDir, fontName + ".sbtfont");
+		final File sbtFontFile = new File(outDir, fontName + ".stbfont");
 		resultFiles.add(sbtFontFile);
 		try(final DataOutputStream out = new DataOutputStream(new FileOutputStream(sbtFontFile))){
             {
@@ -189,7 +186,7 @@ public class STBFontPacker {
                 }
             }
 
-            out.writeShort(fontMetrics.ascent + fontMetrics.descent + fontMetrics.lineGap);
+            out.writeShort(fontMetrics.lineGap);
             out.writeShort(fontMetrics.ascent);
             out.writeShort(fontMetrics.descent);
 
@@ -213,6 +210,7 @@ public class STBFontPacker {
                 out.writeShort(glyph.xOff);
                 out.writeShort(glyph.yOff);
                 out.writeShort(glyph.advanceWidth);
+                out.writeShort(glyph.leftSideBearing);
             }
 
         } catch (Exception e){

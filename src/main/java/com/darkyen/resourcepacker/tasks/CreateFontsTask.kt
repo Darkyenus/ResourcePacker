@@ -123,7 +123,7 @@ object CreateFontsTask : Task() {
     }
 
     fun packStbFont(file:ResourceFile, size: Int) {
-        val resultFiles = STBFontPacker.packFont(file.file, newFolder(), size, true)
+        val resultFiles = STBFontPacker.packFont(file.file, file.name, newFolder(), size, true)
 
         for (resultFile in resultFiles) {
             file.parent.addChild(resultFile)
