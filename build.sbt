@@ -13,6 +13,8 @@ javacOptions in doc := Seq("-source", "7")
 
 val gdxVersion = "1.9.6"
 
+val lwjglVersion = "3.1.0"
+
 crossPaths := false
 
 autoScalaLibrary := false
@@ -30,7 +32,11 @@ libraryDependencies ++= Seq(
 	"com.esotericsoftware" % "minlog" % "1.3.0",
 	"com.google.guava" % "guava" % "17.0",
 	"org.apache.xmlgraphics" % "batik-transcoder" % "1.7",
-	"org.apache.xmlgraphics" % "batik-codec" % "1.7"
+	"org.apache.xmlgraphics" % "batik-codec" % "1.7",
+	"org.lwjgl" % "lwjgl-stb" % lwjglVersion,
+	"org.lwjgl" % "lwjgl-stb" % lwjglVersion classifier "natives-macos",
+	"org.lwjgl" % "lwjgl-stb" % lwjglVersion classifier "natives-linux",
+	"org.lwjgl" % "lwjgl-stb" % lwjglVersion classifier "natives-windows"
 )
 
 fork in Test := true

@@ -27,7 +27,7 @@ class OperationJanitor(private val workingRootProvider: WorkingRootProvider) {
             sb.append('.').append(extension ?: file.extension)
             result = File(workingRoot, sb.toString())
             sb.setLength(0)
-            if (Log.DEBUG) Log.debug("OperationJanitor", "Trying to create file in \"" + workingRoot.canonicalPath + "\" called \"" + sb + "\".")
+            if (Log.DEBUG) Log.debug("OperationJanitor", "Trying to create file in \"" + workingRoot.absolutePath + "\" called \"" + sb + "\".")
         } while (result.exists())
         return result
     }
@@ -44,7 +44,7 @@ class OperationJanitor(private val workingRootProvider: WorkingRootProvider) {
                 sb.append(extension)
             }
             result = File(workingRoot, sb.toString())
-            if (Log.DEBUG) Log.debug("OperationJanitor", "Trying to create file from scratch in \"" + workingRoot.canonicalPath + "\" called \"" + sb + "\".")
+            if (Log.DEBUG) Log.debug("OperationJanitor", "Trying to create file from scratch in \"" + workingRoot.absolutePath + "\" called \"" + sb + "\".")
             sb.setLength(0)
         } while (result.exists())
         return result
@@ -76,19 +76,19 @@ class OperationJanitor(private val workingRootProvider: WorkingRootProvider) {
     fun clearFolder(dir: File, deleteDir: Boolean = false) {
         if (dir.isDirectory) {
             for (file in dir.listFiles()) {
-                if (file.isFile) {
-                    if (!file.delete()) {
-                        Log.warn("OperationJanitor", "File ${file.canonicalPath} not deleted.")
-                    }
-                } else if (file.isDirectory) {
+                if (file.isDirectory) {
                     clearFolder(file, deleteDir = true)
+                } else {
+                    if (!file.delete()) {
+                        Log.warn("OperationJanitor", "File ${file.absolutePath} not deleted.")
+                    }
                 }
             }
             if (deleteDir && !dir.delete()) {
-                Log.warn("OperationJanitor", "Directory ${dir.canonicalPath} not deleted.")
+                Log.warn("OperationJanitor", "Directory ${dir.absolutePath} not deleted.")
             }
         } else if (dir.isFile) {
-            Log.warn("OperationJanitor", "Directory ${dir.canonicalPath} is actually a file.")
+            Log.warn("OperationJanitor", "Directory ${dir.absolutePath} is actually a file.")
         }
     }
 

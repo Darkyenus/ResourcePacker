@@ -5,6 +5,7 @@ import com.badlogic.gdx.utils.IntSet
 import com.darkyen.resourcepacker.Resource.Companion.isFont
 import com.darkyen.resourcepacker.Resource.ResourceFile
 import com.darkyen.resourcepacker.Task
+import com.darkyen.resourcepacker.tasks.font.STBFontPacker
 import com.darkyen.resourcepacker.util.FreeTypePacker
 import com.darkyen.resourcepacker.util.FreeTypePacker.FreeTypeFontParameter
 import com.darkyen.resourcepacker.util.clampImage
@@ -56,11 +57,83 @@ object CreateFontsTask : Task() {
     /** Matches bg#RRGGBBAA colors for foreground (color of font). Default is White. */
     val FGRegex = Regex("fg#$ColorRegexGroup")
 
+    fun packFreeTypeFont(file: ResourceFile, size:Int) {
+        val parameter = FreeTypeFontParameter()
+        parameter.fontName = file.name
+        parameter.size = size
+
+        for (param in file.flags) {
+            val (width, hexColor, optJoin) = OutlineRegex.matchEntire(param) ?: continue
+            parameter.borderWidth = width.toFloat()
+            parameter.borderColor = parseHexColor(hexColor)
+            parameter.borderStraight = "straight".equals(optJoin, ignoreCase = true)
+            break
+        }
+
+        for (param in file.flags) {
+            val (hexColor) = FGRegex.matchEntire(param) ?: continue
+            parameter.color = parseHexColor(hexColor)
+            break
+        }
+
+        val glyphsToAdd = IntSet()
+        for (p in file.flags) {
+            val (start, end) = GlyphRangeRegex.matchEntire(p) ?: continue
+
+            val from = start.toInt()
+            val to = end.toInt()
+            for (i in from..to) {
+                glyphsToAdd.add(i)
+            }
+            Log.debug(Name, "Added glyphs from $from (${java.lang.Character.toChars(from).contentToString()}) to $to (${java.lang.Character.toChars(to).contentToString()}).")
+        }
+        if (glyphsToAdd.size != 0) {
+            parameter.codePoints = glyphsToAdd
+        }
+
+        val outputFolder = newFolder()
+        val packedFiles = FreeTypePacker.pack(file.file, outputFolder, parameter)
+
+        val pageCount = packedFiles.size - 1
+        if (pageCount <= 0) {
+            Log.warn(Name, "Font didn't render on any pages. " + file)
+        } else if (pageCount > 1) {
+            Log.warn(Name, "Font did render on more than one page. This may case problems when loading for UI skin. $pageCount $file")
+        }
+        Log.info(Name, "Font created. " + file)
+        file.parent.removeChild(file)
+
+        var bgColor: Color? = null
+        for (param in file.flags) {
+            bgColor = parseHexColor(BGRegex.matchEntire(param)?.groupValues?.get(1) ?: continue)
+            Log.debug(Name, "Background color for font set. " + file)
+        }
+
+        for (generatedJavaFile in packedFiles) {
+            if (Files.getFileExtension(generatedJavaFile.name).equals("png", ignoreCase = true)) {
+                clampImage(generatedJavaFile)
+                if (bgColor != null) {
+                    val jColor = java.awt.Color(bgColor.r, bgColor.g, bgColor.b, bgColor.a)
+                    preBlendImage(generatedJavaFile, jColor)
+                }
+            }
+            val f = file.parent.addChild(generatedJavaFile)
+            Log.debug(Name, "Font file added. " + f)
+        }
+    }
+
+    fun packStbFont(file:ResourceFile, size: Int) {
+        val resultFiles = STBFontPacker.packFont(file.file, newFolder(), size, true)
+
+        for (resultFile in resultFiles) {
+            file.parent.addChild(resultFile)
+        }
+        file.removeFromParent()
+        Log.info("StbFont from $file created (${resultFiles.size} result files)")
+    }
 
     override fun operate(file: ResourceFile): Boolean {
         if (file.isFont()) {
-            val params = file.flags
-
             var size: Int = -1
 
             for (flag in file.flags) {
@@ -76,67 +149,10 @@ object CreateFontsTask : Task() {
             } else if (size == 0) {
                 Log.error(Name, "Size must be bigger than 0. " + file)
             } else {
-                val parameter = FreeTypeFontParameter()
-                parameter.fontName = file.name
-                parameter.size = size
-
-                for (param in params) {
-                    val (width, hexColor, optJoin) = OutlineRegex.matchEntire(param) ?: continue
-                    parameter.borderWidth = width.toFloat()
-                    parameter.borderColor = parseHexColor(hexColor)
-                    parameter.borderStraight = "straight".equals(optJoin, ignoreCase = true)
-                    break
-                }
-
-                for (param in params) {
-                    val (hexColor) = FGRegex.matchEntire(param) ?: continue
-                    parameter.color = parseHexColor(hexColor)
-                    break
-                }
-
-                val glyphsToAdd = IntSet()
-                for (p in params) {
-                    val (start, end) = GlyphRangeRegex.matchEntire(p) ?: continue
-
-                    val from = start.toInt()
-                    val to = end.toInt()
-                    for (i in from..to) {
-                        glyphsToAdd.add(i)
-                    }
-                    Log.debug(Name, "Added glyphs from $from (${java.lang.Character.toChars(from).contentToString()}) to $to (${java.lang.Character.toChars(to).contentToString()}).")
-                }
-                if (glyphsToAdd.size != 0) {
-                    parameter.codePoints = glyphsToAdd
-                }
-
-                val outputFolder = newFolder()
-                val packedFiles = FreeTypePacker.pack(file.file, outputFolder, parameter)
-
-                val pageCount = packedFiles.size - 1
-                if (pageCount <= 0) {
-                    Log.warn(Name, "Font didn't render on any pages. " + file)
-                } else if (pageCount > 1) {
-                    Log.warn(Name, "Font did render on more than one page. This may case problems when loading for UI skin. $pageCount $file")
-                }
-                Log.info(Name, "Font created. " + file)
-                file.parent.removeChild(file)
-
-                var bgColor: Color? = null
-                for (param in params) {
-                    bgColor = parseHexColor(BGRegex.matchEntire(param)?.groupValues?.get(1) ?: continue)
-                    Log.debug(Name, "Background color for font set. " + file)
-                }
-
-                for (generatedJavaFile in packedFiles) {
-                    if (Files.getFileExtension(generatedJavaFile.name).equals("png", ignoreCase = true)) {
-                        clampImage(generatedJavaFile)
-                        if (bgColor != null) {
-                            val jColor = java.awt.Color(bgColor.r, bgColor.g, bgColor.b, bgColor.a)
-                            preBlendImage(generatedJavaFile, jColor)
-                        }
-                    }
-                    val f = file.parent.addChild(generatedJavaFile)
-                    Log.debug(Name, "Font file added. " + f)
+                if (file.flags.contains("stbfont")) {
+                    packStbFont(file, size)
+                } else {
+                    packFreeTypeFont(file, size)
                 }
             }
             return true
