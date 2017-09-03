@@ -3,7 +3,7 @@ organization := "com.github.Darkyenus" //Default jitpack organization
 
 name := "ResourcePacker"
 
-version := "2.1"
+version := "2.2-SNAPSHOT"
 
 startYear := Some(2014)
 
