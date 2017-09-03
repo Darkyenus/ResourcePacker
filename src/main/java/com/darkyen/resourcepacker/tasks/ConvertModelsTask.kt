@@ -2,6 +2,7 @@ package com.darkyen.resourcepacker.tasks
 
 import com.darkyen.resourcepacker.Resource.ResourceFile
 import com.darkyen.resourcepacker.Task
+import com.darkyen.resourcepacker.util.*
 import com.esotericsoftware.minlog.Log
 import com.google.common.base.Charsets
 import com.google.common.io.ByteStreams

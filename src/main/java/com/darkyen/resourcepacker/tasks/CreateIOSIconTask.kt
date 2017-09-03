@@ -2,6 +2,8 @@ package com.darkyen.resourcepacker.tasks
 
 import com.darkyen.resourcepacker.Resource.ResourceFile
 import com.darkyen.resourcepacker.Task
+import com.darkyen.resourcepacker.image.createImage
+import com.darkyen.resourcepacker.image.saveToFile
 import com.esotericsoftware.minlog.Log
 
 /**
@@ -20,7 +22,6 @@ import com.esotericsoftware.minlog.Log
  *
  * Append `Small` to any flag to create small icons as well (used for spotlight & settings)
  * Append `Artwork` to any flag to create big artwork icon dimensions as well.
- * NOTE: Artwork does not currently work properly, because extension (png) is left there.
  *
  * Sizes are from Apple Developer Library:
  * https://developer.apple.com/library/ios/qa/qa1686/_index.html
@@ -134,12 +135,11 @@ object CreateIOSIconTask : Task() {
                         collectIconTypes(flag, iPadSizes, iPadSmallSizes, ArtworkSizes)
                     } else continue
 
-            if (file.extension != RasterizeTask.SVGExtension) {
-                Log.warn(Name, "File is marked for iOS icon creation, but isn't a supported format (svg): " + file)
+            val image = file.createImage()
+            if (image == null) {
+                Log.warn(Name, "File is marked for iOS icon creation, but isn't a supported image format: " + file)
                 return false
             }
-
-
 
             val transitiveFlags = file.copyFlagsExcept {
                 it.startsWith(UniversalFlag) || it.startsWith(iPhoneFlag) || it.startsWith(iPadFlag)
@@ -149,11 +149,10 @@ object CreateIOSIconTask : Task() {
 
             for ((size, filename, stripExtension) in iconTypes) {
                 if (file.parent.files.find { it.name == filename } == null) {
-                    val flags = ArrayList<String>()
-                    flags.add("rasterize")
-                    flags.add("${size}x$size")
-                    flags.addAll(transitiveFlags)
-                    val singleIconFile = ResourceFile(file.file, file.parent, filename, flags, RasterizeTask.SVGExtension)
+                    val resizedFile = newBlankFile(filename, "png")
+                    image.image(width = size, height = size).saveToFile(resizedFile, "png")
+
+                    val singleIconFile = ResourceFile(resizedFile, file.parent, filename, transitiveFlags, if (stripExtension) "" else "png")
                     file.parent.addChild(singleIconFile)
 
                     Log.debug(Name, "Icon file $singleIconFile created")

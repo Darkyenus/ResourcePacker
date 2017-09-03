@@ -1,38 +1,44 @@
 package com.darkyen.resourcepacker.tasks
 
+import com.badlogic.gdx.graphics.Texture.TextureFilter.Linear
 import com.badlogic.gdx.utils.Json
 import com.badlogic.gdx.utils.JsonReader
 import com.darkyen.resourcepacker.Resource
-import com.darkyen.resourcepacker.Resource.Companion.isImage
 import com.darkyen.resourcepacker.Resource.ResourceDirectory
 import com.darkyen.resourcepacker.Task
-import com.darkyen.resourcepacker.util.preBlendImage
-import com.darkyen.resourcepacker.util.tools.texturepacker.TexturePacker
+import com.darkyen.resourcepacker.image.createImage
+import com.darkyen.resourcepacker.isImage
+import com.darkyen.resourcepacker.util.texturepacker.MultiScaleTexturePacker
+import com.darkyen.resourcepacker.util.texturepacker.MultiScaleTexturePacker.Settings
 import com.esotericsoftware.minlog.Log
-import com.google.common.io.Files
-import java.awt.Color
 import java.io.FileReader
-import javax.imageio.ImageIO
 
 /**
  * Packs all images in .pack. flagged directory using libGDX's texture packer and then flattens it.
- * Can also pre-blend all packed resources if supplied with .#RRGGBB. flag, see [PreBlendTask].
  *
  * If the directory contains pack.json file (name can contain flags),
  * it will be used in packing, as with default packing procedures.
+ *
+ * Can generate multiple atlas image files with different, Apple-like densities, that is, with @2x scheme.
+ * Files with @Nx (where N is scale level) are assigned to that level.
+ * Missing density levels are created from existing ones, either by up/downscaling or by rasterization with different dimensions.
+ * Automatically rasterizes .svg files, flags from RasterizeTask can be used for specifying scale.
+ *
+ * Generates only one atlas file and (potentially) multiple image files.
+ * Therefore, all images are packed to the same locations, only all coordinates are multiplied by N.
+ * This allows for simple runtime density switching.
+ *
+ * Scale level 1 is specified automatically, others (usually 2) can be added with @Nx flag (@2x in case of level 2).
+ * Note that if the level is not a power of two (for example 3), `pot` setting must be set to false (default is true),
+ * otherwise the level will be ignored and warning will be emitted.
  *
  * @author Darkyen
  */
 object PackTask : Task() {
 
-    /**
-     * Matches: #RRGGBB
-     * Where RR (GG and BB) are hexadecimal digits.
-     * Example:
-     * #FF0056
-     * to capture groups RR GG BB
-     */
-    val PreBlendRegex = Regex("#([0-9A-Fa-f][0-9A-Fa-f])([0-9A-Fa-f][0-9A-Fa-f])([0-9A-Fa-f][0-9A-Fa-f])")
+    private val ScalesRegex = Regex("@([1-9]+[0-9]*)x")
+
+    private val ScaledNameRegex = Regex("(.+)@([1-9]+[0-9]*)x?")
 
     private val json = Json()
     private val jsonReader = JsonReader()
@@ -42,10 +48,10 @@ object PackTask : Task() {
             return false
         }
 
-        val settings = TexturePacker.Settings()
+        val settings = Settings()
         settings.limitMemory = false
         settings.useIndexes = false
-        settings.filterMag = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear
+        settings.filterMag = Linear
         settings.filterMin = settings.filterMag
         settings.pot = true //Seems that it is still better for performance and whatnot
         settings.maxWidth = 2048
@@ -55,7 +61,9 @@ object PackTask : Task() {
         settings.stripWhitespaceX = true
         settings.stripWhitespaceY = true
         settings.alphaThreshold = 0
-
+        settings.silent = false
+        settings.ignoreBlankImages = false
+        //settings.debug = true
         for (packFile in directory.files) {
             if (packFile.name == "pack" && packFile.extension == "json") {
                 json.readFields(settings, jsonReader.parse(FileReader(packFile.file)))
@@ -73,15 +81,32 @@ object PackTask : Task() {
                             "(paddingX = " + settings.paddingX + ", paddingY = " + settings.paddingY + ")")
         }
 
-        val packer = TexturePacker(settings)
-        directory.forEachFile(filter = {it.isImage()}) { image ->
-            val bufferedImage = ImageIO.read(image.file)
-            if (bufferedImage == null) {
-                Log.error(Name, "Image could not be loaded. " + image)
-            } else {
-                packer.addImage(bufferedImage, image.name + (if (image.flags.contains("9")) ".9" else ""))
-                if (Log.DEBUG) Log.debug(Name, "Image added to pack. $image")
+        val scales = com.badlogic.gdx.utils.IntArray()
+        scales.add(1)
+        for (flag in directory.flags) {
+            val scaleMatch = ScalesRegex.matchEntire(flag) ?: continue
+            val scale = scaleMatch.groupValues[1].toInt()
+            if (!scales.contains(scale)) {
+                scales.add(scale)
             }
+        }
+        scales.sort()
+        settings.scales = scales.toArray()
+
+        val packer = MultiScaleTexturePacker(settings)
+        directory.forEachFile(filter = { it.isImage() }) { image ->
+            var name = image.name
+            var scale = 1
+
+            val scaledNameMatch = ScaledNameRegex.matchEntire(name)
+            if (scaledNameMatch != null) {
+                name = scaledNameMatch.groupValues[1]
+                scale = scaledNameMatch.groupValues[2].toInt()
+            }
+
+            packer.addImage(name, -1, scale, image.createImage())
+
+            if (Log.DEBUG) Log.debug(Name, "Image added to pack. $image")
             directory.removeChild(image)
         }
 
@@ -89,17 +114,8 @@ object PackTask : Task() {
         val outputFolder = newFolder()
         packer.pack(outputFolder, atlasName)
 
-        val preBlendColor = directory.flags.matchFirst(PreBlendRegex) { (r, g, b) ->
-            if (Log.DEBUG) Log.debug(Name, "Blending color for atlas set. " + atlasName)
-            Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16))
-        }
 
         for (outputJavaFile in outputFolder.listFiles()) {
-            if (Files.getFileExtension(outputJavaFile.name).equals("png", ignoreCase = true)) {
-                if (preBlendColor != null) {
-                    preBlendImage(outputJavaFile, preBlendColor)
-                }
-            }
             directory.parent.addChild(Resource.ResourceFile(outputJavaFile, directory.parent))
         }
         FlattenTask.flatten(directory)

@@ -2,14 +2,12 @@ package com.darkyen.resourcepacker.tasks
 
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.utils.IntSet
-import com.darkyen.resourcepacker.Resource.Companion.isFont
 import com.darkyen.resourcepacker.Resource.ResourceFile
 import com.darkyen.resourcepacker.Task
+import com.darkyen.resourcepacker.isFont
 import com.darkyen.resourcepacker.tasks.font.STBFontPacker
-import com.darkyen.resourcepacker.util.FreeTypePacker
+import com.darkyen.resourcepacker.util.*
 import com.darkyen.resourcepacker.util.FreeTypePacker.FreeTypeFontParameter
-import com.darkyen.resourcepacker.util.clampImage
-import com.darkyen.resourcepacker.util.preBlendImage
 import com.esotericsoftware.minlog.Log
 import com.google.common.io.Files
 
@@ -39,23 +37,23 @@ object CreateFontsTask : Task() {
     /* Example:
      * 14          => Size 14
      */
-    val SizeRegex = Regex("(\\d+)")
+    private val SizeRegex = Regex("(\\d+)")
 
     /* Example:
      * 56-67     => Glyphs 56 to 67 should be added
      */
-    val GlyphRangeRegex = Regex("(\\d+)-(\\d+)")
+    private val GlyphRangeRegex = Regex("(\\d+)-(\\d+)")
 
     /* Example:
      * outline 4 FF0000 miter   => Will create solid red 4px outline with miter joins
      */
-    val OutlineRegex = Regex("outline (\\d+) $ColorRegexGroup ?(\\w+)?")
+    private val OutlineRegex = Regex("outline (\\d+) $ColorRegexGroup ?(\\w+)?")
     //outline (\\d+) ([0-9A-Fa-f]{3,8}) ?(\\w+)?
 
     /** Matches bg#RRGGBBAA colors for background. Default is Transparent. */
-    val BGRegex = Regex("bg#$ColorRegexGroup")
+    private val BGRegex = Regex("bg#$ColorRegexGroup")
     /** Matches bg#RRGGBBAA colors for foreground (color of font). Default is White. */
-    val FGRegex = Regex("fg#$ColorRegexGroup")
+    private val FGRegex = Regex("fg#$ColorRegexGroup")
 
     fun packFreeTypeFont(file: ResourceFile, size:Int) {
         val parameter = FreeTypeFontParameter()

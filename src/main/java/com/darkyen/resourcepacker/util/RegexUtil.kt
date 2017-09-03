@@ -1,9 +1,10 @@
 @file:Suppress("NOTHING_TO_INLINE")
 
-package com.darkyen.resourcepacker.tasks
+package com.darkyen.resourcepacker.util
 
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.math.MathUtils
+import com.esotericsoftware.minlog.Log
 
 /**
  *
@@ -20,12 +21,23 @@ internal operator inline fun MatchResult.component8(): String = this.groupValues
 internal operator inline fun MatchResult.component9(): String = this.groupValues[9]
 internal operator inline fun MatchResult.component10(): String = this.groupValues[10]
 
-internal inline fun <T> Iterable<String>.matchFirst(r: Regex, collector: (MatchResult) -> T): T? {
+internal inline fun <T> Iterable<String>.matchFirst(r: Regex, warnIfMore:Boolean = true, collector: (MatchResult) -> T): T? {
+    var result:T? = null
+    var hasResult = false
     for (string in this) {
         val match = r.matchEntire(string) ?: continue
-        return collector(match)
+        if (hasResult) {
+            Log.warn("matchFirst", "Multiple matches for '${r.pattern}' pattern")
+            continue
+        }
+        result = collector(match)
+        if (warnIfMore) {
+            hasResult = true
+        } else {
+            return result
+        }
     }
-    return null
+    return result
 }
 
 internal inline fun Iterable<String>.matchAll(r: Regex, collector: (MatchResult) -> Unit) {

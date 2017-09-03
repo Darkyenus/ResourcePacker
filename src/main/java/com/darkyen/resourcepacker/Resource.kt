@@ -308,7 +308,7 @@ sealed class Resource {
             }
         }
 
-        fun toPrettyString(sb: StringBuilder, level: Int): Unit {
+        fun toPrettyString(sb: StringBuilder, level: Int) {
             fun appendLevel() {
                 var i = 0
                 while (i < level) {
@@ -427,9 +427,10 @@ sealed class Resource {
             extension = if (withExtension && nameParts.size >= 2) nameParts.last().toLowerCase() else ""
             return Triple(name.toString(), flags, extension)
         }
-
-        fun ResourceFile.isImage(): Boolean = extension == "png" || extension == "jpg" || extension == "jpeg" || extension == "gif"
-        fun ResourceFile.isVectorImage(): Boolean = extension == "svg"
-        fun ResourceFile.isFont(): Boolean = extension == "ttf" || extension == "otf"
     }
 }
+
+fun Resource.ResourceFile.isBitmapImage(): Boolean = extension == "png" || extension == "jpg" || extension == "jpeg" || extension == "gif" || extension == "bmp"
+fun Resource.ResourceFile.isVectorImage(): Boolean = extension == "svg" || extension == "svgz"
+fun Resource.ResourceFile.isImage(): Boolean = isBitmapImage() || isVectorImage()
+fun Resource.ResourceFile.isFont(): Boolean = extension == "ttf" || extension == "otf"
