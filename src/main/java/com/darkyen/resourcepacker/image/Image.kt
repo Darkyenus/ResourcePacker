@@ -191,9 +191,9 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
             }
 
             if (newWidth == -1) {
-                newWidth = Math.round((_width.toDouble() / _height.toDouble()) * newHeight).toInt()
+                newWidth = Math.round((_fileWidth.toDouble() / _fileHeight.toDouble()) * newHeight).toInt()
             } else {
-                newHeight = Math.round((_height.toDouble() / _width.toDouble()) * newWidth).toInt()
+                newHeight = Math.round((_fileHeight.toDouble() / _fileWidth.toDouble()) * newWidth).toInt()
             }
             _width = newWidth
             _height = newHeight

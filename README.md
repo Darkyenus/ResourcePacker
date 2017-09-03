@@ -197,6 +197,7 @@ loading the image data into a internal image representation (bitmap). These flag
 This flag also has multiple alternate forms: `#RGB`, `#RGBA`, `#RRGGBB`. Each letter (`R`, `G`, `B` or `A`) is
 a hexadecimal digit.
 * `9` - This image is a ninepatch (currently available only for bitmap images) (see *Dimensions* below)
+* `scaling <algo>` - Use scaling algorithm `<algo>` available algorithms are `nearest`, `bilinear` and `bicubic`
 
 **Dimensions**  
 In image scaling flags, `<W>` or `<H>` can not only contain a positive decimal number, but also a single symbol `?`.
