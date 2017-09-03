@@ -47,7 +47,17 @@ val PixelSizePattern = Regex("""((?:\d+)|\?)x((?:\d+)|\?)""")
  */
 val PreBlendRegex = Regex("#$ColorRegexGroup")
 
+/**
+ * Matches: scaling <algo>
+ * Where <algo> is a name of one of the algorithms in [ImageScaling], by [ImageScaling.scalingName].
+ * Example:
+ * scaling bilinear
+ */
+val ScalingRegex = Regex("scaling (\\w+)")
+
 val TileSize: SettingKey<Int> = SettingKey("TileSize", 128, "Size of tile used by w<W>h<H> flag pattern")
+
+val DefaultImageScaling: SettingKey<ImageScaling> = SettingKey("DefaultImageScaling", ImageScaling.Bilinear, "Image scaling algorithm used by default")
 
 private fun tileFraction(input: String): Int {
     if (input.isEmpty()) return -1
@@ -64,6 +74,7 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
     protected var _fileWidth:Int = -1
     protected var _fileHeight:Int = -1
     protected var _backgroundColor:Color? = null
+    protected var _scaling:ImageScaling? = null
     protected var _ninepatch:Boolean = false
     protected var _ninepatchSplits:IntArray? = null
     protected var _ninepatchPads:IntArray? = null
@@ -92,6 +103,17 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
             // Background color
             file.flags.matchFirst(PreBlendRegex) { (color) ->
                 _backgroundColor = parseHexColor(color).toAwt()
+            }
+
+            // Scaling
+            file.flags.matchFirst(ScalingRegex) { (algo) ->
+                for (value in ImageScaling.values()) {
+                    if (value.scalingName.equals(algo, ignoreCase = true)) {
+                        _scaling = value
+                        return@matchFirst
+                    }
+                }
+                Log.warn("Image", "Unknown scaling algorithm '$algo'")
             }
 
             // Dimensions
@@ -215,6 +237,12 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
             return _backgroundColor
         }
 
+    val scaling:ImageScaling
+        get() {
+            ensureImagePrepared()
+            return _scaling ?: DefaultImageScaling.get()
+        }
+
     val ninepatch:Boolean
         get() {
             ensureImagePrepared()
@@ -290,7 +318,7 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
         }
 
         override fun image(width: Int, height: Int, background: Color?): BufferedImage {
-            return resizeImage(image(), width, height, background)
+            return resizeImage(image(), width, height, background, scaling)
         }
 
     }
@@ -471,7 +499,11 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
 
     companion object {
 
-        private fun resizeStep(current:Int, target:Int):Int {
+        private fun resizeStep(current:Int, target:Int, scaling: ImageScaling):Int {
+            if (!scaling.multiStepDownscale) {
+                return target
+            }
+
             if (target >= current) {
                 // When making the image bigger, single step is enough
                 return target
@@ -485,7 +517,7 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
             return target
         }
 
-        fun resizeImage(image:BufferedImage, width: Int, height: Int, background: Color?):BufferedImage {
+        fun resizeImage(image:BufferedImage, width: Int, height: Int, background: Color?, scaling: ImageScaling = DefaultImageScaling.get()):BufferedImage {
 
             if (width == image.width && height == image.height && background == null) {
                 return image
@@ -498,15 +530,15 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
 
             // Do scaling
             do {
-                val nextWidth = resizeStep(currentWidth, width)
-                val nextHeight = resizeStep(currentHeight, height)
+                val nextWidth = resizeStep(currentWidth, width, scaling)
+                val nextHeight = resizeStep(currentHeight, height, scaling)
 
                 val lastStep = nextWidth == width && nextHeight == height
 
                 val resizedImage = BufferedImage(nextWidth, nextHeight, BufferedImage.TYPE_INT_ARGB)
                 val g = resizedImage.createGraphics()
                 g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, scaling.awtFlag)
 
                 if (lastStep && background != null) {
                     val oldColor = g.color
@@ -515,7 +547,7 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
                     g.color = oldColor
                 }
 
-                g.drawImage(currentStep, 0, 0, width, height, null)
+                g.drawImage(currentStep, 0, 0, nextWidth, nextHeight, null)
                 g.dispose()
 
                 currentStep = resizedImage
