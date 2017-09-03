@@ -191,16 +191,20 @@ When a task deals with an *image*, it can be a bitmap (png, jpg, ...) or a vecto
 These images can have multiple flags, these can be thought of as a "loading" flags, because they affect the process of
 loading the image data into a internal image representation (bitmap). These flags are:
 
-* `w<W>h<H>` - Image will be W tile-sizes wide and H tile-sizes tall (see *TileSize* setting and *? Dimension* below)
-* `<W>x<H>` - Image will be W pixels wide and H pixels tall (see *? Dimension* below)
+* `w<W>h<H>` - Image will be W tile-sizes wide and H tile-sizes tall (see *TileSize* setting and *Dimensions* below)
+* `<W>x<H>` - Image will be W pixels wide and H pixels tall (see *Dimensions* below)
 * `#RRGGBBAA` - Change the color of the background of the image - affects only images with transparency.
 This flag also has multiple alternate forms: `#RGB`, `#RGBA`, `#RRGGBB`. Each letter (`R`, `G`, `B` or `A`) is
 a hexadecimal digit.
+* `9` - This image is a ninepatch (currently available only for bitmap images) (see *Dimensions* below)
 
-**? Dimension**  
+**Dimensions**  
 In image scaling flags, `<W>` or `<H>` can not only contain a positive decimal number, but also a single symbol `?`.
 When present, it means that this dimension is either specified by the other scaling flag, or that this dimension should
 be derived from the source image dimensions, in a way that maintains the aspect ratio.
+
+In bitmap ninepatch images (only), these dimensions apply only to the image data - without ninepatch frame. Therefore tasks that
+produce images with baked ninepatch frame, such as RasterizeTask will for flag 50x50 produce image 52x52 pixels large.
 
 **Settings**
 * TileSize - Size of tile used in w<W>h<H> flag pattern

@@ -66,7 +66,7 @@ public final class ImageSource implements Comparable<ImageSource> {
                     this.baseHeight = baseHeight = image.getHeight() / (i+1);
                     this.ninepatch = ninepatch = image.getNinepatch();
                     if (ninepatch) {
-                        final int[] splits = image.getNinepatchSplits();
+                        final int[] splits = image.ninepatchSplits(baseWidth, baseHeight);
                         assert splits != null;
                         this.splits = new int[]{
                                 splits[0] / (i+1),
@@ -75,7 +75,7 @@ public final class ImageSource implements Comparable<ImageSource> {
                                 splits[3] / (i+1)
                         };
 
-                        final int[] pads = image.getNinepatchPads();
+                        final int[] pads = image.ninepatchPads(baseWidth, baseHeight);
                         if (pads != null) {
                             this.pads = new int[]{
                                     pads[0] / (i+1),

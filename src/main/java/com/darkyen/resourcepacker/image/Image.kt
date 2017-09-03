@@ -221,17 +221,29 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
             return _ninepatch
         }
 
-    val ninepatchSplits:IntArray?
-        get() {
-            ensureImagePrepared()
-            return _ninepatchSplits
+    private fun scale(width: Int, height: Int, ninepatchData:IntArray?):IntArray? {
+        if (ninepatchData == null) {
+            return null
         }
+        val scaleX = width.toDouble() / originalWidth.toDouble()
+        val scaleY = height.toDouble() / originalHeight.toDouble()
+        return intArrayOf(
+                Math.round(ninepatchData[0] * scaleX).toInt(),
+                Math.round(ninepatchData[1] * scaleX).toInt(),
+                Math.round(ninepatchData[2] * scaleY).toInt(),
+                Math.round(ninepatchData[3] * scaleY).toInt()
+        )
+    }
 
-    val ninepatchPads:IntArray?
-        get() {
-            ensureImagePrepared()
-            return _ninepatchPads
-        }
+    fun ninepatchSplits(width: Int, height: Int):IntArray? {
+        ensureImagePrepared()
+        return scale(width, height, _ninepatchSplits)
+    }
+
+    fun ninepatchPads(width: Int, height: Int):IntArray? {
+        ensureImagePrepared()
+        return scale(width, height, _ninepatchPads)
+    }
 
     abstract fun image(width: Int = this.width, height: Int = this.height, background: Color? = backgroundColor):BufferedImage
 
@@ -268,8 +280,7 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
                 val strippedImage = BufferedImage(image.width - 2, image.height - 2, BufferedImage.TYPE_INT_ARGB)
                 val g = strippedImage.createGraphics()
                 g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)
-                //TODO TEST
-                g.drawImage(image, 0, 0, image.width, image.height, 1, 1, image.width - 1, image.height - 1, null)
+                g.drawImage(image, 0, 0, image.width, image.height, 1, 1, image.width + 1, image.height + 1, null)
                 g.dispose()
 
                 _image = strippedImage
@@ -494,9 +505,8 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
 
                 val resizedImage = BufferedImage(nextWidth, nextHeight, BufferedImage.TYPE_INT_ARGB)
                 val g = resizedImage.createGraphics()
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
                 g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
 
                 if (lastStep && background != null) {
                     val oldColor = g.color
