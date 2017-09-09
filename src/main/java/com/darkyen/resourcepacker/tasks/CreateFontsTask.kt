@@ -40,7 +40,7 @@ object CreateFontsTask : Task() {
     private val SizeRegex = Regex("(\\d+)")
 
     /* Example:
-     * 56-67     => Glyphs 56 to 67 should be added
+     * 56-67     => Glyphs 56 to 67 (decimal, inclusive) should be added
      */
     private val GlyphRangeRegex = Regex("(\\d+)-(\\d+)")
 

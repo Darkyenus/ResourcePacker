@@ -54,7 +54,7 @@ public class STBFontPacker {
 		final int padding = 1;
 
 		int glyphSurfaceArea = 0;
-		for (int codePoint = 0; codePoint < 0xFFFF; codePoint++) {
+		for (int codePoint = 0; codePoint < 0x10FFFF; codePoint++) {
 			final int glyphIndex = stbtt_FindGlyphIndex(fontInfo, codePoint);
 			if (glyphIndex == 0 && codePoint != 0) continue;
 
