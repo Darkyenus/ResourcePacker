@@ -129,25 +129,18 @@ public class MaxRectsPacker implements MultiScaleTexturePacker.Packer {
         minWidth = Math.max(minWidth, settings.minWidth);
         minHeight = Math.max(minHeight, settings.minHeight);
 
-        if (!settings.silent) System.out.print("Packing");
-
         // Find the minimal page size that fits all rects.
         MultiScaleTexturePacker.Page bestResult = null;
         if (settings.square) {
             int minSize = Math.max(minWidth, minHeight);
             int maxSize = Math.min(settings.maxWidth, settings.maxHeight);
             BinarySearch sizeSearch = new BinarySearch(minSize, maxSize, settings.fast ? 25 : 15, settings.pot);
-            int size = sizeSearch.reset(), i = 0;
+            int size = sizeSearch.reset();
             while (size != -1) {
                 MultiScaleTexturePacker.Page result = packAtSize(true, size - edgePaddingX, size - edgePaddingY, inputRects);
-                if (!settings.silent) {
-                    if (++i % 70 == 0) System.out.println();
-                    System.out.print(".");
-                }
                 bestResult = getBest(bestResult, result);
                 size = sizeSearch.next(result == null);
             }
-            if (!settings.silent) System.out.println();
             // Rects don't fit on one page. Fill a whole page and return.
             if (bestResult == null)
                 bestResult = packAtSize(false, maxSize - edgePaddingX, maxSize - edgePaddingY, inputRects);
@@ -158,16 +151,12 @@ public class MaxRectsPacker implements MultiScaleTexturePacker.Packer {
         } else {
             BinarySearch widthSearch = new BinarySearch(minWidth, settings.maxWidth, settings.fast ? 25 : 15, settings.pot);
             BinarySearch heightSearch = new BinarySearch(minHeight, settings.maxHeight, settings.fast ? 25 : 15, settings.pot);
-            int width = widthSearch.reset(), i = 0;
+            int width = widthSearch.reset();
             int height = settings.square ? width : heightSearch.reset();
             while (true) {
                 MultiScaleTexturePacker.Page bestWidthResult = null;
                 while (width != -1) {
                     MultiScaleTexturePacker.Page result = packAtSize(true, width - edgePaddingX, height - edgePaddingY, inputRects);
-                    if (!settings.silent) {
-                        if (++i % 70 == 0) System.out.println();
-                        System.out.print(".");
-                    }
                     bestWidthResult = getBest(bestWidthResult, result);
                     width = widthSearch.next(result == null);
                     if (settings.square) //noinspection SuspiciousNameCombination
@@ -179,7 +168,6 @@ public class MaxRectsPacker implements MultiScaleTexturePacker.Packer {
                 if (height == -1) break;
                 width = widthSearch.reset();
             }
-            if (!settings.silent) System.out.println();
             // Rects don't fit on one page. Fill a whole page and return.
             if (bestResult == null)
                 bestResult = packAtSize(false, settings.maxWidth - edgePaddingX, settings.maxHeight - edgePaddingY, inputRects);

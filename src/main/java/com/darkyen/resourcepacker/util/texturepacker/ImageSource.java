@@ -128,10 +128,11 @@ public final class ImageSource implements Comparable<ImageSource> {
                     final Image image = imagesByFactor[i - 1];
                     if (image != null) {
                         bitmapsByFactor[scale - 1] = ensureCorrectFormat(image.image(baseWidth*scale, baseHeight*scale, image.getBackgroundColor()));
+                        continue deriveMissingBitmaps;
                     }
                 }
                 //Then fail
-                assert false;
+                assert false : "Failed to fill scales of "+this;
             }
         }
 
