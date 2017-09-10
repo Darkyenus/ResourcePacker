@@ -26,6 +26,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.*;
 import com.darkyen.resourcepacker.image.Image;
 import com.darkyen.resourcepacker.util.tools.texturepacker.ColorBleedEffect;
+import com.esotericsoftware.minlog.Log;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -34,9 +35,8 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -44,9 +44,13 @@ import java.util.Iterator;
  * @author Nathan Sweet
  */
 public class MultiScaleTexturePacker {
+    private static final String LOG = "MultiScaleTexturePacker";
+
     private final Settings settings;
     private final Packer packer;
+    /** ImageName -> (ImageIndex -> ImageSource) */
     private final ObjectMap<String, IntMap<ImageSource>> imageSourcesByName = new ObjectMap<>();
+    private int totalImageCountHint = 0;
 
     public MultiScaleTexturePacker(Settings settings) {
         this.settings = settings;
@@ -72,27 +76,30 @@ public class MultiScaleTexturePacker {
             indices.put(index, source = new ImageSource(name, index));
         }
         source.addImage(scaleFactor, image);
+        totalImageCountHint++;
         return source;
     }
 
     public void pack(File outputDir, String packFileName) {
-        if (packFileName.endsWith(settings.atlasExtension))
+        if (packFileName.endsWith(settings.atlasExtension)) {
             packFileName = packFileName.substring(0, packFileName.length() - settings.atlasExtension.length());
+        }
         if (!outputDir.mkdirs() && !outputDir.isDirectory()) {
-            System.err.println("Failed to create output directory " + outputDir + ", output will probably fail.");
+            Log.warn(LOG, "Failed to create output directory " + outputDir + ", output will probably fail.");
         }
 
         final int[] scales = settings.scales;
-        final Array<Rect> rects = new Array<>(false, imageSourcesByName.size);
+        final Array<Rect> rects = new Array<>(false, totalImageCountHint);
 
         for (IntMap<ImageSource> indices : imageSourcesByName.values()) {
             for (ImageSource source : indices.values()) {
                 final Rect rect = source.validate(settings, scales);
+
                 if (settings.ignoreBlankImages && rect.pageWidth == 0 && rect.pageHeight == 0) {
-                    if (!settings.silent) System.out.println("Ignoring blank input image: " + rect.source);
-                    continue;
+                    Log.debug(LOG, "Ignoring blank input image: " + rect.source);
+                } else {
+                    rects.add(rect);
                 }
-                rects.add(rect);
             }
         }
 
@@ -115,23 +122,23 @@ public class MultiScaleTexturePacker {
         final Array<Page> pages = packer.pack(rects);
 
         Arrays.sort(scales);
-        //Iterate in reverse so that smallest scale (usually 1, base scale) is left in "pages"
+        // Iterate in reverse so that smallest scale (usually 1, base scale) is left in "pages"
         // and we can write correct atlas file
         for (int i = scales.length - 1; i >= 0; i--) {
             final int scale = scales[i];
 
             if (settings.pot && !MathUtils.isPowerOfTwo(scale)) {
-                System.err.println("Skipping scale " + scale + " because only power of two scales can be used with power of two textures");
+                Log.warn(LOG, "Skipping scale " + scale + " because only power of two scales can be used with power of two textures");
                 continue;
             }
             writeImages(outputDir, settings.getScaledPackFileName(packFileName, scale), pages, scale);
         }
 
         try {
-            assert scales[0] == 1;
+            assert scales[0] == 1 : "Last scale must be @1x";
             writePackFile(outputDir, packFileName, pages);
         } catch (IOException ex) {
-            throw new RuntimeException("Error writing pack file.", ex);
+            throw new RuntimeException("Error writing pack file", ex);
         }
     }
 
@@ -183,8 +190,9 @@ public class MultiScaleTexturePacker {
             BufferedImage canvas = new BufferedImage(width, height, getBufferedImageType(settings.format));
             Graphics2D g = (Graphics2D) canvas.getGraphics();
 
-            if (!settings.silent)
-                System.out.println("Writing " + canvas.getWidth() + "x" + canvas.getHeight() + ": " + outputFile);
+            if (Log.DEBUG) {
+                Log.debug("Writing " + canvas.getWidth() + "x" + canvas.getHeight() + ": " + outputFile);
+            }
 
             for (Rect rect : page.outputRects) {
                 BufferedImage image = rect.source.createTrimmedImage(scaleFactor);
@@ -310,7 +318,7 @@ public class MultiScaleTexturePacker {
         File packFile = new File(outputDir, scaledPackFileName + settings.atlasExtension);
         File packDir = packFile.getParentFile();
         if (!packDir.mkdirs() && !packDir.isDirectory()) {
-            System.err.println("Failed to create pack file directory " + packDir + ", output will probably fail.");
+            Log.warn(LOG, "Failed to create pack file directory " + packDir + ", output will probably fail.");
         }
 
         if (packFile.exists()) {
@@ -329,52 +337,52 @@ public class MultiScaleTexturePacker {
             }
         }
 
-        FileWriter writer = new FileWriter(packFile, true);
-        for (Page page : pages) {
-            writer.write("\n" + page.imageName + "\n");
-            writer.write("size: " + page.imageWidth + "," + page.imageHeight + "\n");
-            writer.write("format: " + settings.format + "\n");
-            writer.write("filter: " + settings.filterMin + "," + settings.filterMag + "\n");
-            writer.write("repeat: " + getRepeatValue() + "\n");
+        try (OutputStreamWriter writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(packFile, true)), StandardCharsets.UTF_8)) {
+            for (Page page : pages) {
+                writer.append('\n').append(page.imageName).append('\n');
+                writer.append("size: ").append(String.valueOf(page.imageWidth)).append(",").append(String.valueOf(page.imageHeight)).append('\n');
+                writer.append("format: ").append(String.valueOf(settings.format)).append('\n');
+                writer.append("filter: ").append(String.valueOf(settings.filterMin)).append(",").append(String.valueOf(settings.filterMag)).append('\n');
+                writer.append("repeat: ").append(getRepeatValue()).append('\n');
 
-            page.outputRects.sort();
-            for (Rect rect : page.outputRects) {
-                writeRect(writer, page, rect, rect.source);
-                //noinspection unchecked
-                Array<ImageSource> aliases = new Array(rect.aliases.size);
-                for (ImageSource alias : rect.aliases) {
-                    aliases.add(alias);
-                }
-                aliases.sort();
-                for (ImageSource alias : aliases) {
-                    writeRect(writer, page, rect, alias);
+                page.outputRects.sort();
+                for (Rect rect : page.outputRects) {
+                    writeRect(writer, page, rect, rect.source);
+                    //noinspection unchecked
+                    Array<ImageSource> aliases = new Array(rect.aliases.size);
+                    for (ImageSource alias : rect.aliases) {
+                        aliases.add(alias);
+                    }
+                    aliases.sort();
+                    for (ImageSource alias : aliases) {
+                        writeRect(writer, page, rect, alias);
+                    }
                 }
             }
         }
-        writer.close();
     }
 
-    private void writeRect(FileWriter writer, Page page, Rect rect, ImageSource source) throws IOException {
-        writer.write(source.name + "\n");
-        writer.write("  rotate: " + rect.rotated + "\n");
-        writer.write("  xy: " + (page.x + rect.pageX) + ", " + (page.y + page.height - rect.pageHeight - rect.pageY) + "\n");
+    private void writeRect(Writer writer, Page page, Rect rect, ImageSource source) throws IOException {
+        writer.append(source.name).append('\n');
+        writer.append("  rotate: ").append(String.valueOf(rect.rotated)).append('\n');
+        writer.append("  xy: ").append(String.valueOf(page.x + rect.pageX)).append(", ").append(String.valueOf(page.y + page.height - rect.pageHeight - rect.pageY)).append('\n');
 
-        writer.write("  size: " + rect.source.getStripWidth() + ", " + rect.source.getStripHeight() + "\n");
+        writer.append("  size: ").append(String.valueOf(rect.source.getStripWidth())).append(", ").append(String.valueOf(rect.source.getStripHeight())).append('\n');
         final int[] splits = source.getSplits();
         if (splits != null) {
-            writer.write("  split: " //
-                    + splits[0] + ", " + splits[1] + ", " + splits[2] + ", " + splits[3] + "\n");
+            writer.append("  split: ")
+                    .append(String.valueOf(splits[0])).append(", ").append(String.valueOf(splits[1])).append(", ").append(String.valueOf(splits[2])).append(", ").append(String.valueOf(splits[3])).append('\n');
         }
         final int[] pads = source.getPads();
         if (pads != null) {
-            if (splits == null) writer.write("  split: 0, 0, 0, 0\n");
-            writer.write("  pad: " + pads[0] + ", " + pads[1] + ", " + pads[2] + ", " + pads[3] + "\n");
+            if (splits == null) writer.append("  split: 0, 0, 0, 0\n");
+            writer.append("  pad: ").append(String.valueOf(pads[0])).append(", ").append(String.valueOf(pads[1])).append(", ").append(String.valueOf(pads[2])).append(", ").append(String.valueOf(pads[3])).append('\n');
         }
 
         final int originalWidth = source.getBaseWidth(), originalHeight = source.getBaseHeight();
-        writer.write("  orig: " + originalWidth + ", " + originalHeight + "\n");
-        writer.write("  offset: " + source.getStripOffX() + ", " + (originalHeight - rect.source.getStripHeight() - source.getStripOffY()) + "\n");
-        writer.write("  index: " + source.index + "\n");
+        writer.append("  orig: ").append(String.valueOf(originalWidth)).append(", ").append(String.valueOf(originalHeight)).append('\n');
+        writer.append("  offset: ").append(String.valueOf(source.getStripOffX())).append(", ").append(String.valueOf(originalHeight - rect.source.getStripHeight() - source.getStripOffY())).append('\n');
+        writer.append("  index: ").append(String.valueOf(source.index)).append('\n');
     }
 
     private String getRepeatValue() {
@@ -500,7 +508,6 @@ public class MultiScaleTexturePacker {
         public boolean ignoreBlankImages = true;
         public boolean fast;
         public boolean debug;
-        public boolean silent;
         public boolean combineSubdirectories;
         public boolean flattenPaths;
         public boolean premultiplyAlpha;
@@ -539,7 +546,6 @@ public class MultiScaleTexturePacker {
             wrapX = settings.wrapX;
             wrapY = settings.wrapY;
             debug = settings.debug;
-            silent = settings.silent;
             combineSubdirectories = settings.combineSubdirectories;
             flattenPaths = settings.flattenPaths;
             premultiplyAlpha = settings.premultiplyAlpha;

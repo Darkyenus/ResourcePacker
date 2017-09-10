@@ -52,6 +52,7 @@ public final class ImageSource implements Comparable<ImageSource> {
 
     public final MultiScaleTexturePacker.Rect validate(MultiScaleTexturePacker.Settings settings, int[] scales) {
         assert !validated;
+        validated = true;
 
         final int baseWidth, baseHeight;
         final boolean ninepatch;
@@ -168,7 +169,7 @@ public final class ImageSource implements Comparable<ImageSource> {
     }
 
     public final BufferedImage createTrimmedImage(int scaleFactor) {
-        assert validated;
+        assert validated : "Not validated yet";
 
         final BufferedImage image = bitmapsByFactor[scaleFactor - 1];
         assert image != null;
@@ -188,52 +189,52 @@ public final class ImageSource implements Comparable<ImageSource> {
     }
 
     public boolean isNinepatch() {
-        assert validated;
+        assert validated : "Not validated yet";
         return ninepatch;
     }
 
     public int[] getSplits() {
-        assert validated;
+        assert validated : "Not validated yet";
         return splits;
     }
 
     public int[] getPads() {
-        assert validated;
+        assert validated : "Not validated yet";
         return pads;
     }
 
     public int getStripOffX() {
-        assert validated;
+        assert validated : "Not validated yet";
         return stripOffX;
     }
 
     public int getStripOffY() {
-        assert validated;
+        assert validated : "Not validated yet";
         return stripOffY;
     }
 
     public int getStripWidth() {
-        assert validated;
+        assert validated : "Not validated yet";
         return stripWidth;
     }
 
     public int getStripHeight() {
-        assert validated;
+        assert validated : "Not validated yet";
         return stripHeight;
     }
 
     public final int getBaseWidth() {
-        assert validated;
+        assert validated : "Not validated yet";
         return baseWidth;
     }
 
     public final int getBaseHeight() {
-        assert validated;
+        assert validated : "Not validated yet";
         return baseHeight;
     }
 
     public final boolean isIdentical(ImageSource to) {
-        assert validated;
+        assert validated : "Not validated yet";
 
         final byte[] myHash = getHash();
         final byte[] theirHash = to.getHash();

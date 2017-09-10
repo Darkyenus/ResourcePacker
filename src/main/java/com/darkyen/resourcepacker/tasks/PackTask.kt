@@ -61,7 +61,6 @@ object PackTask : Task() {
         settings.stripWhitespaceX = true
         settings.stripWhitespaceY = true
         settings.alphaThreshold = 0
-        settings.silent = false
         settings.ignoreBlankImages = false
         //settings.debug = true
         for (packFile in directory.files) {
