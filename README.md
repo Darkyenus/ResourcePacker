@@ -129,27 +129,8 @@ Packs all *images* in `pack` flagged directory using libGDX's texture atlas pack
 If the directory contains pack.json file (name can contain flags), it will be used in packing,
 as with default packing procedures.
 
-**Flags (all trigger)**
-* `pack` - Create a texture atlas from the *images* in this directory
-
-**Example**
-```
-/UITextures.pack/
-	button.png
-	slider.9.png
-	icon_cog.svg
-```
-produces
-```
-UITextures.atlas
-UITextures.png
-```
-
-### DensityPackTask
-More advanced version of PackTask
-
-Can generate multiple atlas image files with different, Apple-like densities, that is, with @2x scheme.
-Files with @Nx (where N is scale level) are assigned to that level.
+Can generate multiple atlas image files with different, Apple-like densities, that is, with @2x-like scheme.
+Files with @Nx in the name (where N is scale level) are assigned to that level.
 Missing density levels are created from existing ones, either by up/downscaling or by rasterization with different dimensions.
 
 Generates only one atlas file and (potentially) multiple image files.
@@ -157,17 +138,23 @@ Therefore, all images are packed to the same locations, only all coordinates are
 This allows for simple runtime density switching.
  
 Scale level 1 is specified automatically, others (usually 2) can be added with @Nx flag (@2x in case of level 2).
-Note that if the level is not a power of two (for example 3), `pot` setting must be set to false (default is true),
-otherwise the level will be ignored and warning will be emitted.
+Note that if the level is not a power of two (for example 3), `pot` setting must be set to false through pack.json
+(default is true), otherwise the level will be ignored and warning will be emitted.
+
+It is possible to specify both bitmap and vector image for an level. When that is the case, bitmap data will be used
+for that level and the vector image will be used for creating other levels as necessary and for measuring dimensions.
+(Bitmap override image dimensions will be ignored then.) Otherwise it is illegal to supply multiple images for single
+level - arbitrary one will be chosen and others will be ignored with a warning.
 
 **Flags**
-* `densitypack` - **trigger** - Create a texture atlas from the *images* in this directory
+* `pack` - **trigger** - Create a texture atlas from the *images* in this directory
 * `@Nx` - Specify which density should be also generated, @1x is enabled by default
 
 **Example**
 ```
-/UITextures.@2x.densitypack/
+/UITextures.@2x.pack/
 	button.png
+	button@2x.png
 	slider.9.png
 	icon_cog.svg
 ```

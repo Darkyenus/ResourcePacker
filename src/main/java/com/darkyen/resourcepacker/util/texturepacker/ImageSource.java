@@ -17,6 +17,7 @@ import java.util.Arrays;
 public final class ImageSource implements Comparable<ImageSource> {
 
     public static final int MAX_SCALE_FACTOR = 4;
+    public static final String LOG = "ImageSource";
 
     public final String name;
     public final int index;
@@ -29,6 +30,10 @@ public final class ImageSource implements Comparable<ImageSource> {
     private int stripOffX, stripOffY, stripWidth, stripHeight;
     private int baseWidth, baseHeight;
 
+    /** Assigned bitmap overrides.
+     * The distinctions allows to supply general .svg for all scales, and override some scale factors with specialized bitmap. */
+    private final Image.BitmapImage[] bitmapOverrideImagesByFactor = new Image.BitmapImage[MAX_SCALE_FACTOR];
+    /** Images assigned from bitmap and vector images. If the {@link #bitmapOverrideImagesByFactor} is filled, then this will hold the vector version. */
     private final Image[] imagesByFactor = new Image[MAX_SCALE_FACTOR];
     private final BufferedImage[] bitmapsByFactor = new BufferedImage[MAX_SCALE_FACTOR];
     private byte[] imageSourceHash = null;
@@ -43,11 +48,21 @@ public final class ImageSource implements Comparable<ImageSource> {
         assert !validated;
         checkScaleFactor(scaleFactor);
 
-        if (imagesByFactor[scaleFactor - 1] != null) {
-            System.err.println("Image for " + name + " @" + scaleFactor + "x already exists at " + imagesByFactor[scaleFactor - 1].getFile() + " (overriding with " + image.getFile() + ")");
+        final int idx = scaleFactor - 1;
+        bitmapsByFactor[idx] = null;
+
+        if (image instanceof Image.BitmapImage && imagesByFactor[idx] instanceof Image.VectorImage && bitmapOverrideImagesByFactor[idx] == null) {
+            bitmapOverrideImagesByFactor[idx] = (Image.BitmapImage) image;
+            Log.debug(LOG, name+"@"+scaleFactor+"x is "+imagesByFactor[idx]+" with level override "+bitmapOverrideImagesByFactor[idx]);
+        } else if (image instanceof Image.VectorImage && imagesByFactor[idx] instanceof Image.BitmapImage && bitmapOverrideImagesByFactor[idx] == null) {
+            bitmapOverrideImagesByFactor[idx] = (Image.BitmapImage) imagesByFactor[idx];
+            imagesByFactor[idx] = image;
+            Log.debug(LOG, name+"@"+scaleFactor+"x is "+imagesByFactor[idx]+" with level override "+bitmapOverrideImagesByFactor[idx]);
+        } else if (imagesByFactor[idx] != null) {
+            Log.warn(LOG, name + "@" + scaleFactor + "x already exists at " + imagesByFactor[idx].getFile() + ", " + image.getFile() + " will be ignored");
+        } else {
+            imagesByFactor[idx] = image;
         }
-        imagesByFactor[scaleFactor - 1] = image;
-        bitmapsByFactor[scaleFactor - 1] = null;
     }
 
     public final MultiScaleTexturePacker.Rect validate(MultiScaleTexturePacker.Settings settings, int[] scales) {
@@ -102,10 +117,13 @@ public final class ImageSource implements Comparable<ImageSource> {
                 final int expectedW = baseWidth * scale;
                 final int expectedH = baseHeight * scale;
                 if (image.getWidth() != expectedW || image.getHeight() != expectedH) {
-                    Log.warn("Image", "Expected size of "+image+" @"+scale+"x is "+expectedW+"x"+expectedH+", but image reports "+image.getWidth()+"x"+image.getHeight()+". Image may be distorted as a result.");
+                    Log.warn(LOG, "Expected size of "+image+" @"+scale+"x is "+expectedW+"x"+expectedH+", but image reports "+image.getWidth()+"x"+image.getHeight()+". Image may be distorted as a result.");
                 }
 
-                bitmapsByFactor[scale - 1] = ensureCorrectFormat(image.image(expectedW, expectedH, image.getBackgroundColor()));
+                final Image overrideImage = bitmapOverrideImagesByFactor[scale - 1];
+                final Image rasterizationImage = overrideImage == null ? image : overrideImage;
+
+                bitmapsByFactor[scale - 1] = ensureCorrectFormat(rasterizationImage.image(expectedW, expectedH, rasterizationImage.getBackgroundColor()));
             }
 
             // Derive missing bitmaps
@@ -176,6 +194,18 @@ public final class ImageSource implements Comparable<ImageSource> {
         assert image != null;
         if (stripOffX == 0 && stripOffY == 0 && stripWidth == baseWidth && stripHeight == baseHeight) {
             return image;
+        }
+
+        if (stripWidth == 0 || stripHeight == 0) {
+            Log.warn(LOG, "Image "+this+" is stripped whole, returning single pixel.");
+            return new BufferedImage(image.getColorModel(),
+                    image.getRaster().createWritableChild(
+                            stripOffX * scaleFactor,
+                            stripOffY * scaleFactor,
+                            scaleFactor,
+                            scaleFactor, 0, 0, null),
+                    image.getColorModel().isAlphaPremultiplied(),
+                    null);
         }
 
         return new BufferedImage(
@@ -253,7 +283,7 @@ public final class ImageSource implements Comparable<ImageSource> {
         try {
             digest = MessageDigest.getInstance("SHA1");
         } catch (NoSuchAlgorithmException e) {
-            Log.warn("ImageSource", "Digest algorithm not available, reliant functionality won't work");
+            Log.warn(LOG, "Digest algorithm not available, reliant functionality won't work");
             return null;
         }
 
