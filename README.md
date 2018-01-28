@@ -3,30 +3,33 @@
 
 ## What does it do ##
 
-It takes things from input directory, does some tasks on it and writes the result to output directory.
+It takes files from input directory, applies some tasks on them, and writes the result to the output directory.
 
 Default set of tasks is centered around game development in libGDX. However, what runs when is fully customizable.
-There are no configuration files (generally). What task should run on which file/directory is determined by its name.
+There are no configuration files (unless used by the task itself).
+What task should run on which file/directory is determined by its name.
 Each file in input directory is named as follows:
 ```
 name.flag1.flag2.<...>.flagN.extension
 ```
-Flags surrounded with `"` are considered to be part of the name, not flags.
-This allows producing files (and directories) with dots in the name, e.g. `name.something.extension`.
-
-NOTE: Flags and extension are converted to lowercase prior to processing to simplify flag matching.
-
-For example, for "iOS Settings bundle" (a directory named `Settings.bundle`),
-have directory named `Settings."bundle"`.
-
 Directories follow similar pattern, there is just no `.extension`.
+Flags surrounded with `"` are considered to be part of the name, not flags.
+Flags and extension are converted to lowercase prior to processing to simplify flag matching.
 
-See `testresources` directory for examples.
+Examples:
+- Image `hello.cruel."world".png` => `hello.world.png`
+- iOS Settings bundle (directory) `Settings."bundle"` => `Settings.bundle`
+
+See `testresources` directory for more examples.
+
+Each task can determine when it should be executed, usually if the file has a flag that the task recognizes as its **trigger**.
+For example `IgnoreTask` (see below) sees all files and directories, but performs its function only on those,
+that have the `ignore` flag.
 
 ## Default tasks ##
 
 There is a couple of tasks that run by default in following order (order is important).
-Images can have a couple of special flags, see below.
+**Images** can have a couple of special flags, see below. (Italic *image* in documentation signifies, that the image can have predefined special image flags as well.)
 
 ### IgnoreTask
 Removes files and folders with `ignore` flag. Useful when you want to keep some (for example `.gimp`)
@@ -60,8 +63,8 @@ place the `rasterize` flag or make the directory into a `pack` directory.
 ```
 
 ### CreateIOSIconTask
-iOS requires quite a lot different icons of different sizes to be created (18 in total in some extreme cases!),
-which is very tedious and boring.
+iOS requires quite a lot of icons of different sizes (possibly more than 18 in total).
+Creating then can be very tedious.
 This task automatically creates iOS icons from an *image*.
 
 **Flags (all trigger)**
@@ -78,6 +81,7 @@ For more info about iOS icons, see [relevant article in the Apple Developer Libr
 
 ### CreateFontsTask
 Rasterizes true type fonts. Font must have .N. flag where N is font size in pixels.
+Creates fonts in [AngelCode .fnt format](http://www.angelcode.com/products/bmfont/), compatible with libGDX.
 
 **Flags**
 * `<N>` - **trigger** - size
@@ -86,7 +90,7 @@ Rasterizes true type fonts. Font must have .N. flag where N is font size in pixe
 * `fg#RRGGBBAA` - foreground color, default is white
 * `outline W RRGGBBAA [straight]` - add outline of width W and specified color, add "straight" for sharp/mitered edges
 
-When no glyphs are specified, ASCII glyphs are added.
+When no glyphs are specified, all glyphs from the font are added.
 
 **Example**
 ```
