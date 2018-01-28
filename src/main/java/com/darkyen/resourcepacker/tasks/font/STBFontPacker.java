@@ -28,10 +28,11 @@ public class STBFontPacker {
 			if (!file.isFile()) throw new RuntimeException("File not found: " + file.getAbsolutePath());
 			final ByteBuffer data = ByteBuffer.allocateDirect((int)file.length());
 			final FileInputStream in = new FileInputStream(file);
+			final byte[] buffer = new byte[4096];
 			while (true) {
-				final int read = in.read();
-				if (read == -1) break;
-				data.put((byte)read);
+				final int size = in.read(buffer);
+				if (size == -1) break;
+				data.put(buffer, 0, size);
 			}
 			in.close();
 			data.flip();
@@ -48,7 +49,6 @@ public class STBFontPacker {
 			throw new RuntimeException("Init failed");
 
 		final FontMetrics fontMetrics = FontMetrics.getFontMetrics(fontInfo, sizePx);
-		System.out.println(fontMetrics);
 
 		final Array<GlyphData> glyphs = new Array<>();
 		final int padding = 1;

@@ -41,7 +41,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 /**
- * @author Nathan Sweet
+ * @author Nathan Sweet, Jan Polák
  */
 public class MultiScaleTexturePacker {
     private static final String LOG = "MultiScaleTexturePacker";
