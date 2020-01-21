@@ -3,8 +3,8 @@ package com.darkyen.resourcepacker
 import com.badlogic.gdx.utils.SnapshotArray
 import com.darkyen.resourcepacker.util.SnapshotArrayList
 import com.esotericsoftware.minlog.Log
-import com.google.common.io.Files
 import java.io.File
+import java.nio.file.Files
 import com.badlogic.gdx.utils.Array as GdxArray
 
 /**
@@ -232,7 +232,7 @@ sealed class Resource {
         }
 
         fun addResourceChildrenFromFilesystem() {
-            for (file in directory.listFiles()) {
+            for (file in directory.listFiles() ?: emptyArray()) {
                 addChild(file, createStructure = true)
             }
         }
@@ -383,7 +383,7 @@ sealed class Resource {
                 if (myPath.startsWith(resourceDirPath)) {
                     // This file is still inside the resource directory, symlinking is meaningful!
                     try {
-                        java.nio.file.Files.createSymbolicLink(createdFile.toPath(), file.canonicalFile.toPath())
+                        Files.createSymbolicLink(createdFile.toPath(), file.canonicalFile.toPath())
                         return
                     } catch (ex:Exception) {
                         Log.warn("Failed to symlink $file to $createdFile, file will be copied", ex)
@@ -391,7 +391,7 @@ sealed class Resource {
                 }
             }
 
-            Files.copy(file, createdFile)
+            Files.copy(file.toPath(), createdFile.toPath())
         }
 
         /**

@@ -19,6 +19,7 @@ package com.darkyen.resourcepacker.util;
 import com.badlogic.gdx.utils.IntArray;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Reads a TTF font file and provides access to kerning information.
@@ -93,7 +94,7 @@ public class Kerning {
             int offset = (int) input.readUnsignedLong();
             input.skip(4);
 
-            String tag = new String(tagBytes, "ISO-8859-1");
+            String tag = new String(tagBytes, StandardCharsets.ISO_8859_1);
             if (tag.equals("head")) {
                 headOffset = offset;
             } else if (tag.equals("kern")) {
@@ -123,7 +124,7 @@ public class Kerning {
             while (kerningCount-- > 0) {
                 int firstGlyphCode = input.readUnsignedShort();
                 int secondGlyphCode = input.readUnsignedShort();
-                int offset = (int) input.readShort();
+                int offset = input.readShort();
                 storeKerningOffset(firstGlyphCode, secondGlyphCode, offset);
             }
         }
@@ -223,7 +224,7 @@ public class Kerning {
 
         int position = input.getPosition();
 
-        input.seek((int) (subTablePosition + coverageOffset));
+        input.seek(subTablePosition + coverageOffset);
         int[] coverage = readCoverageTable();
 
         input.seek(position);
@@ -231,8 +232,7 @@ public class Kerning {
         IntArray[] glyphsByClass2 = readClassDefinition(subTablePosition + classDefOffset2, class2Count);
         input.seek(position);
 
-        for (int i = 0; i < coverage.length; i++) {
-            int glyph = coverage[i];
+        for (int glyph : coverage) {
             boolean found = false;
             for (int j = 1; j < class1Count && !found; j++) {
                 found = glyphsByClass1[j].contains(glyph);
@@ -314,8 +314,7 @@ public class Kerning {
         int format = input.readUnsignedShort();
         if (format == 1) {
             int glyphCount = input.readUnsignedShort();
-            int[] glyphArray = input.readUnsignedShortArray(glyphCount);
-            return glyphArray;
+            return input.readUnsignedShortArray(glyphCount);
         } else if (format == 2) {
             int rangeCount = input.readUnsignedShort();
             IntArray glyphArray = new IntArray();
@@ -336,7 +335,7 @@ public class Kerning {
         int xAdvance = 0;
         for (int mask = 1; mask <= 0x8000 && mask <= valueFormat; mask <<= 1) {
             if ((valueFormat & mask) != 0) {
-                int value = (int) input.readShort();
+                int value = input.readShort();
                 if (mask == 0x0004) {
                     xAdvance = value;
                 }

@@ -12,7 +12,7 @@ object RemoveEmptyDirectoriesTask : Task() {
 
     override fun operate(directory: Resource.ResourceDirectory): Boolean {
         if (!directory.hasChildren() && !directory.flags.contains("retain")) {
-            Log.info(Name, "Empty directory removed. " + directory)
+            Log.info(Name, "Empty directory removed. $directory")
             directory.parent.removeChild(directory)
             return true
         }

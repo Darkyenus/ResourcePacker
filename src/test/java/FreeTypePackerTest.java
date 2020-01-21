@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.BitmapFontCache;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.HdpiMode;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.GdxNativesLoader;
 import com.badlogic.gdx.utils.StringBuilder;
@@ -49,7 +50,7 @@ public class FreeTypePackerTest {
         config.setWindowSizeLimits(50, 50, 5000, 5000);
         config.setDecorated(true);
         config.setWindowedMode(600, 500);
-        config.setHdpiMode(Lwjgl3ApplicationConfiguration.HdpiMode.Logical);
+        config.setHdpiMode(HdpiMode.Logical);
 
         new Lwjgl3Application(new ApplicationAdapter() {
 

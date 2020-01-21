@@ -114,7 +114,7 @@ object PackTask : Task() {
         packer.pack(outputFolder, atlasName)
 
 
-        for (outputJavaFile in outputFolder.listFiles()) {
+        for (outputJavaFile in outputFolder.listFiles() ?: emptyArray()) {
             directory.parent.addChild(Resource.ResourceFile(outputJavaFile, directory.parent))
         }
         FlattenTask.flatten(directory)

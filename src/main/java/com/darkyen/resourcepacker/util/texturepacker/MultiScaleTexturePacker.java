@@ -180,10 +180,9 @@ public class MultiScaleTexturePacker {
             assert !(page.imageWidth < page.width || page.imageHeight < page.height);
 
             File outputFile;
-            while (true) {
+            do {
                 outputFile = new File(packDir, imageName + (fileIndex++ == 0 ? "" : fileIndex) + "." + settings.outputFormat);
-                if (!outputFile.exists()) break;
-            }
+            } while (outputFile.exists());
             new FileHandle(outputFile).parent().mkdirs();
             page.imageName = outputFile.getName();
 
@@ -348,8 +347,7 @@ public class MultiScaleTexturePacker {
                 page.outputRects.sort();
                 for (Rect rect : page.outputRects) {
                     writeRect(writer, page, rect, rect.source);
-                    //noinspection unchecked
-                    Array<ImageSource> aliases = new Array(rect.aliases.size);
+                    Array<ImageSource> aliases = new Array<>(rect.aliases.size);
                     for (ImageSource alias : rect.aliases) {
                         aliases.add(alias);
                     }

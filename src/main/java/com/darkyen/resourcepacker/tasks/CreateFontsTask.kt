@@ -83,7 +83,7 @@ object CreateFontsTask : Task() {
             for (i in from..to) {
                 glyphsToAdd.add(i)
             }
-            Log.debug(Name, "Added glyphs from $from (${java.lang.Character.toChars(from).contentToString()}) to $to (${java.lang.Character.toChars(to).contentToString()}).")
+            Log.debug(Name, "Added glyphs from $from (${Character.toChars(from).contentToString()}) to $to (${Character.toChars(to).contentToString()}).")
         }
         if (glyphsToAdd.size != 0) {
             parameter.codePoints = glyphsToAdd

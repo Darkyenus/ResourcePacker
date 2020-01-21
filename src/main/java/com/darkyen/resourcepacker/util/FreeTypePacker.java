@@ -55,7 +55,6 @@ public class FreeTypePacker {
         int fileSize = (int) fontFile.length();
 
         library = FreeType.initFreeType();
-        if (library == null) throw new GdxRuntimeException("Couldn't initialize FreeType");
 
         ByteBuffer buffer;
         InputStream input = fontFile.read();
@@ -152,11 +151,10 @@ public class FreeTypePacker {
         final PixmapPacker packer = new PixmapPacker(textureSize, textureSize, Pixmap.Format.RGBA8888, 1, false, new PixmapPacker.SkylineStrategy());
         if (parameter.borderWidth > 0) {
             packer.setTransparentColor(parameter.borderColor);
-            packer.getTransparentColor().a = 0;
         } else {
             packer.setTransparentColor(parameter.color);
-            packer.getTransparentColor().a = 0;
         }
+        packer.getTransparentColor().a = 0;
 
         //System.out.println("Generated "+glyphs.size+" glyphs");
 

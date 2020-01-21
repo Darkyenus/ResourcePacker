@@ -23,7 +23,7 @@ object PyxelTilesTask : Task() {
     override fun operate(file: ResourceFile): Boolean {
         if (file.flags.contains("tiles")) {
             val zip = ZipFile(file.file)
-            fun tile(id: Int): ZipEntry = zip.getEntry("tile" + id + TileExtension)
+            fun tile(id: Int): ZipEntry = zip.getEntry("tile$id$TileExtension")
             val tileStoreFolder = newFolder()
 
             val copyBuffer = ByteArray(StreamUtils.DEFAULT_BUFFER_SIZE)

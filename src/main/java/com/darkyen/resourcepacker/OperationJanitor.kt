@@ -1,8 +1,8 @@
 package com.darkyen.resourcepacker
 
 import com.esotericsoftware.minlog.Log
-import com.google.common.io.Files
 import java.io.File
+import java.nio.file.Files
 
 /**
  * Class that keeps all working files in check, creates new ones and throws old ones away.
@@ -75,7 +75,7 @@ class OperationJanitor(private val workingRootProvider: WorkingRootProvider) {
 
     fun clearFolder(dir: File, deleteDir: Boolean = false) {
         if (dir.isDirectory) {
-            for (file in dir.listFiles()) {
+            for (file in dir.listFiles() ?: emptyArray()) {
                 if (file.isDirectory) {
                     clearFolder(file, deleteDir = true)
                 } else {
@@ -112,7 +112,7 @@ interface WorkingRootProvider {
 }
 
 object TemporaryWorkingRootProvider : WorkingRootProvider {
-    override fun getTemporaryRoot(operationJanitor: OperationJanitor): File = Files.createTempDir()
+    override fun getTemporaryRoot(operationJanitor: OperationJanitor): File = Files.createTempDirectory("resource-packer").toFile()
 
     override val shouldDeleteRoot: Boolean = true
 }
