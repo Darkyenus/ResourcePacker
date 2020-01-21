@@ -1,7 +1,7 @@
 # Resource Packer
 [![License](https://img.shields.io/badge/license-MIT-blue)](http://choosealicense.com/licenses/mit/)
 [![Wemi](https://img.shields.io/badge/Wemi-0.11-blue)](https://github.com/Darkyenus/wemi)
-[![JitPack](https://jitpack.io/v/Darkyenus/ResourcePacker.svg)](https://jitpack.io/#Darkyenus/ResourcePacker)
+[![JitPack](https://jitpack.io/v/com.darkyen/ResourcePacker.svg)](https://jitpack.io/#com.darkyen/ResourcePacker)
 
 ## What does it do
 
@@ -205,16 +205,46 @@ produce images with baked ninepatch frame, such as RasterizeTask will for flag 5
 
 ## How to use
 
-Right now, it is best used through JVM based build system, like SBT or Gradle.
+Right now, it is best used through JVM based build system, like [Wemi](https://github.com/Darkyenus/wemi), SBT or Gradle.
+
+### Wemi
+Modify your `build.kt` with following:
+- At the top of the file add:
+```kt
+@file:BuildDependencyRepository("jitpack", "https://jitpack.io/")
+@file:BuildDependency("com.darkyen:ResourcePacker:2.5")
+```
+- Then add key:
+```kt
+val packResources by key<Path>("Pack resources")
+```
+- Add its implementation:
+```kt
+packResources set {
+    val resources = (WemiRootFolder / "resources")
+    expiresWith(resources)
+    val assets = (WemiRootFolder / "assets")
+    resourcePack(PackingOperation(resources.toFile(), assets.toFile()))
+    assets
+}
+```
+- Run through `wemi packResources` or add the result of `packResources` to your `resources` key:
+```kt
+resources modify {
+    it + FileSet(packResources.get())
+}
+```
+
+### SBT
 Here are instructions on how to use it in build.sbt based project:
 
 1. In your project's `project/plugins.sbt` add lines:
 ```
 resolvers += "jitpack" at "https://jitpack.io"
 
-libraryDependencies += "com.github.Darkyenus" %% "ResourcePacker" % "1.7"
+libraryDependencies += "com.github.Darkyenus" %% "ResourcePacker" % "2.5"
 ```
-1. In your project's build.sbt add lines:
+2. In your project's build.sbt add lines:
 ```
 import darkyenus.resourcepacker.{PackingOperation, LWJGLLauncher}
 
@@ -222,7 +252,7 @@ TaskKey[Unit]("packResources") := {
   LWJGLLauncher.launch(new PackingOperation(baseDirectory.value / "resources",baseDirectory.value / "assets"))
 }
 ```
-1. Now you can run `sbt packResources`. That will pack contents of folder `resources` to `assets` in project's root directory.
+3. Now you can run `sbt packResources`. That will pack contents of folder `resources` to `assets` in project's root directory.
 
 _Note: UI icon may appear during packing, that is normal, packer needs it for GL context._
 
