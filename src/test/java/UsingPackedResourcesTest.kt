@@ -29,7 +29,7 @@ fun main(args: Array<String>) {
 
         override fun create() {
             Gdx.gl.glClearColor(0.5f, 0.3f, 0.3f, 1f)
-            skin = Skin(Gdx.files.local("target/RPTestResult/UISkin.json"))
+            skin = Skin(Gdx.files.local("build/cache/RPTestResult/UISkin.json"))
             stage = Stage(ScreenViewport())
 
             val table = Table(skin)

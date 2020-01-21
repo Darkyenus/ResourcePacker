@@ -8,6 +8,6 @@ import com.esotericsoftware.minlog.Log
 fun main(args: Array<String>) {
     Log.DEBUG()
     resourcePack(
-            PackingOperation("src/test/resources", "target/RPTestResult",
-                    workingRootProvider = LocalWorkingRootProvider("target/RPTestWorkingRoot")))
+            PackingOperation("src/test/resources", "build/cache/RPTestResult",
+                    workingRootProvider = LocalWorkingRootProvider("build/cache/RPTestWorkingRoot")))
 }

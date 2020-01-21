@@ -1,5 +1,7 @@
 @file:Suppress("unused")
+import org.jline.utils.OSUtils
 import wemi.compile.JavaCompilerFlags
+import wemi.configuration
 
 val ResourcePacker by project {
 
@@ -36,4 +38,22 @@ val ResourcePacker by project {
 	) }
 
 	runOptions add { "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" }
+
+	extend(testing) {
+		if (OSUtils.IS_OSX) {
+			runOptions add { "-XstartOnFirstThread" }
+		}
+	}
+}
+
+val resourcePackTest by configuration("Test of Resource Packer", testing) {
+	mainClass set { "ResourcePackerTestKt" }
+}
+
+val usingResourcePackTest by configuration("Test using results of resourcePackTest", testing) {
+	mainClass set { "UsingPackedResourcesTestKt" }
+}
+
+val freeTypePackerTest by configuration("Test of FreeType packer", testing) {
+	mainClass set { "FreeTypePackerTest" }
 }

@@ -27,7 +27,7 @@ public class FreeTypePackerTest {
     public static void main(String[] args){
         GdxNativesLoader.load();
 
-        final FreeTypePacker packer = new FreeTypePacker(new FileHandle(new File("testresources/UISkin.pack/goudy-bookletter-1911.32.from glyphs.ttf")));
+        final FreeTypePacker packer = new FreeTypePacker(new FileHandle(new File("src/test/resources/UISkin.pack/goudy-bookletter-1911.32.0-126.ttf")));
         final FreeTypePacker.FreeTypeFontParameter parameter = new FreeTypePacker.FreeTypeFontParameter();
         parameter.fontName = "FontName";
         parameter.size = 100;
@@ -39,7 +39,7 @@ public class FreeTypePackerTest {
         parameter.shadowOffsetX = 3;
         parameter.shadowOffsetY = 8;
 
-        final FileHandle outputFolder = new FileHandle(new File("target/FreeTypePackerTestResult"));
+        final FileHandle outputFolder = new FileHandle(new File("build/cache/FreeTypePackerTestResult"));
         packer.generate(parameter, outputFolder);
 
 
