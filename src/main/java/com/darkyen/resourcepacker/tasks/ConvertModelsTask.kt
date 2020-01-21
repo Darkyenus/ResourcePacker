@@ -4,12 +4,10 @@ import com.darkyen.resourcepacker.Resource.ResourceFile
 import com.darkyen.resourcepacker.Task
 import com.darkyen.resourcepacker.util.*
 import com.esotericsoftware.minlog.Log
-import com.google.common.base.Charsets
-import com.google.common.io.ByteStreams
-import com.google.common.io.Files
 import org.lwjgl.system.Platform
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.file.Files
 
 /**
  * Converts obj and fbx files to g3db or different format.
@@ -37,7 +35,7 @@ object ConvertModelsTask : Task() {
 
     private fun findDependentFiles(file: ResourceFile, regex: Regex): List<ResourceFile> {
         val result = ArrayList<ResourceFile>()
-        Files.readLines(file.file, Charsets.UTF_8).matchAll(regex) { (dependencyFileName) ->
+        for ((dependencyFileName) in file.file.readLines(Charsets.UTF_8).mapNotNull { regex.matchEntire(it) }) {
             val parts = dependencyFileName.split('/')
             var directory = file.parent
             for (subdirectory in parts.dropLast(1)) {
@@ -46,7 +44,7 @@ object ConvertModelsTask : Task() {
                     directory = dir
                 } else {
                     Log.error(Name, "File references non-existing file. $file -> $dependencyFileName")
-                    return@matchAll
+                    continue
                 }
             }
             val dependentFile = directory.getChildFile(parts.last())
@@ -73,16 +71,16 @@ object ConvertModelsTask : Task() {
     private fun copyObjAndDepsWithoutSpaces(file: ResourceFile) {
         val temp = newFolder()
         val objectFile = File(temp, "object.obj")
-        Files.copy(file.file, objectFile)
+        file.file.copyTo(objectFile)
         file.file = objectFile
 
         for (mtlFile in findDependentFiles(file, MtlLibRegex)) {
             val mtlFileFile = File(temp, mtlFile.simpleName)
-            Files.copy(mtlFile.file, mtlFileFile)
+            mtlFile.file.copyTo(mtlFileFile)
             mtlFile.file = mtlFileFile
             for (textureFile in findDependentFiles(mtlFile, TextureRegex)) {
                 val textureFileFile = File(temp, textureFile.simpleName)
-                Files.copy(textureFile.file, textureFileFile)
+                textureFile.file.copyTo(textureFileFile)
                 textureFile.file = textureFileFile
             }
         }
@@ -108,7 +106,7 @@ object ConvertModelsTask : Task() {
 
         val inputFilePath = file.file.canonicalPath
 
-        val outputFilePostfix = "." + convertTo
+        val outputFilePostfix = ".$convertTo"
         val outputFile = File(newFolder(), file.name + outputFilePostfix)
         val outputFilePath = outputFile.canonicalPath
 
@@ -143,13 +141,12 @@ object ConvertModelsTask : Task() {
     }
 
     private fun copyResourceToFolder(destination: File, resource: String) {
-        Files.createParentDirs(destination)
-        val inp = ConvertModelsTask::class.java.classLoader.getResourceAsStream(resource)
-        val out = FileOutputStream(destination)
-        ByteStreams.copy(inp, out)
-        out.flush()
-        out.close()
-        inp.close()
+        Files.createDirectories(destination.toPath().parent)
+        ConvertModelsTask::class.java.classLoader.getResourceAsStream(resource)?.use { inp ->
+            FileOutputStream(destination).use { out ->
+                inp.copyTo(out)
+            }
+        }
         destination.setExecutable(true, false)
     }
 
@@ -173,7 +170,7 @@ object ConvertModelsTask : Task() {
                 copyResourceToFolder(File(executableFolder, "libfbxsdk.so"), "fbxconv/linux/libfbxsdk.so")
             }
             else -> {
-                error("Failed to prepare fbx-conv executable, unknown platform: " + platform)
+                error("Failed to prepare fbx-conv executable, unknown platform: $platform")
             }
         }
         return@lazy executable
@@ -181,7 +178,7 @@ object ConvertModelsTask : Task() {
 
     private fun executeCommand(arguments: ArrayList<String>, linkFbxSdk: Boolean) {
         val command = fbxConvExecutable.canonicalPath
-        Log.info(Name, "Executing external command. " + command)
+        Log.info(Name, "Executing external command. $command")
 
         arguments.add(0, command)
 
@@ -189,7 +186,7 @@ object ConvertModelsTask : Task() {
                 .command(arguments)
 
         if (linkFbxSdk) {
-            processBuilder.environment().put("LD_LIBRARY_PATH", fbxConvExecutable.parentFile.canonicalPath)
+            processBuilder.environment()["LD_LIBRARY_PATH"] = fbxConvExecutable.parentFile.canonicalPath
         }
 
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT)
@@ -206,7 +203,7 @@ object ConvertModelsTask : Task() {
                 Log.info(Name, "Try downloading and installing manually. From: http://www.microsoft.com/en-us/download/confirmation.aspx?id=5555")
             }
         } else {
-            Log.warn(Name, "External command terminated with unusual code. " + processResult)
+            Log.warn(Name, "External command terminated with unusual code. $processResult")
         }
     }
 }

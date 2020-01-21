@@ -4,8 +4,6 @@ import com.darkyen.resourcepacker.Resource.ResourceDirectory
 import com.darkyen.resourcepacker.Resource.ResourceFile
 import com.darkyen.resourcepacker.Task
 import com.esotericsoftware.minlog.Log
-import com.google.common.base.Charsets
-import com.google.common.io.Files
 
 /**
  * Creates Apple `.strings` file from directory with `AppleStrings` flag.
@@ -40,14 +38,14 @@ object CreateAppleStringsTask : Task() {
             val strings = StringBuilder()
 
             directory.forEachFile { stringFile ->
-                val content = Files.toString(stringFile.file, Charsets.UTF_8)
+                val content = stringFile.file.readText(Charsets.UTF_8)
                 strings.append('"').append(escape(stringFile.name)).append("\" = \"").append(escape(content)).append("\";\n")
             }
 
             directory.removeFromParent()
 
             val resultJavaFile = newBlankFile(directory.name, "strings")
-            Files.write(strings, resultJavaFile, Charsets.UTF_16)
+            resultJavaFile.writeText(strings.toString(), Charsets.UTF_16)
 
             val resourceFile = ResourceFile(
                     resultJavaFile, directory.parent,

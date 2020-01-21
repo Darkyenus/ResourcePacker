@@ -9,7 +9,6 @@ import com.darkyen.resourcepacker.tasks.font.STBFontPacker
 import com.darkyen.resourcepacker.util.*
 import com.darkyen.resourcepacker.util.FreeTypePacker.FreeTypeFontParameter
 import com.esotericsoftware.minlog.Log
-import com.google.common.io.Files
 
 /**
  * Rasterizes .ttf fonts.
@@ -94,21 +93,21 @@ object CreateFontsTask : Task() {
 
         val pageCount = packedFiles.size - 1
         if (pageCount <= 0) {
-            Log.warn(Name, "Font didn't render on any pages. " + file)
+            Log.warn(Name, "Font didn't render on any pages. $file")
         } else if (pageCount > 1) {
             Log.warn(Name, "Font did render on more than one page. This may case problems when loading for UI skin. $pageCount $file")
         }
-        Log.info(Name, "Font created. " + file)
+        Log.info(Name, "Font created. $file")
         file.parent.removeChild(file)
 
         var bgColor: Color? = null
         for (param in file.flags) {
             bgColor = parseHexColor(BGRegex.matchEntire(param)?.groupValues?.get(1) ?: continue)
-            Log.debug(Name, "Background color for font set. " + file)
+            Log.debug(Name, "Background color for font set. $file")
         }
 
         for (generatedJavaFile in packedFiles) {
-            if (Files.getFileExtension(generatedJavaFile.name).equals("png", ignoreCase = true)) {
+            if (generatedJavaFile.getExtension().equals("png", ignoreCase = true)) {
                 clampImage(generatedJavaFile)
                 if (bgColor != null) {
                     val jColor = java.awt.Color(bgColor.r, bgColor.g, bgColor.b, bgColor.a)
@@ -116,7 +115,7 @@ object CreateFontsTask : Task() {
                 }
             }
             val f = file.parent.addChild(generatedJavaFile)
-            Log.debug(Name, "Font file added. " + f)
+            Log.debug(Name, "Font file added. $f")
         }
     }
 
@@ -143,9 +142,9 @@ object CreateFontsTask : Task() {
             }
 
             if (size < 0) {
-                Log.debug(Name, "Not rasterizing font, size not specified." + file)
+                Log.debug(Name, "Not rasterizing font, size not specified. $file")
             } else if (size == 0) {
-                Log.error(Name, "Size must be bigger than 0. " + file)
+                Log.error(Name, "Size must be bigger than 0. $file")
             } else {
                 if (file.flags.contains("stbfont")) {
                     packStbFont(file, size)

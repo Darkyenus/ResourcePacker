@@ -2,7 +2,6 @@
 
 package com.darkyen.resourcepacker.util
 
-import com.google.common.io.Files
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.awt.image.LookupOp
@@ -35,7 +34,7 @@ fun preBlendImage(imageFile: File, color: Color, ninepatch: Boolean = false) {
 
     g.dispose()
 
-    ImageIO.write(resultImage, Files.getFileExtension(imageFile.name), imageFile)
+    ImageIO.write(resultImage, imageFile.getExtension(), imageFile)
     if (resultImage.width != originalImage.width || resultImage.height != originalImage.height) {
         error("Something very weird happened while pre-blending ow: " + originalImage.width + " oh: " + originalImage.height + " rw: " + resultImage.width + " rh: " + resultImage.height + " f: " + imageFile.canonicalPath)
     }
@@ -57,7 +56,7 @@ fun multiplyImage(imageFile: File, color: Color) {
 
     val resultImage = filter.filter(originalImage, BufferedImage(originalImage.width, originalImage.height, originalImage.type))
 
-    ImageIO.write(resultImage, Files.getFileExtension(imageFile.name), imageFile)
+    ImageIO.write(resultImage, imageFile.getExtension(), imageFile)
     if (resultImage.width != originalImage.width || resultImage.height != originalImage.height) {
         error("Something very weird happened while multiplying ow: " + originalImage.width + " oh: " + originalImage.height + " rw: " + resultImage.width + " rh: " + resultImage.height + " f: " + imageFile.canonicalPath)
     }
@@ -75,13 +74,13 @@ fun clampImage(imageFile: File) {
         var x = xs
         var y = ys
 
-        val Alpha = 3
+        val alpha = 3
         val pix = IntArray(4)
         var cullable = true
         while (cullable && x >= 0 && y >= 0 && x < w && y < h) {
             raster.getPixel(x, y, pix)
 
-            if (pix[Alpha] > 0) {
+            if (pix[alpha] > 0) {
                 cullable = false
             }
 
@@ -110,6 +109,6 @@ fun clampImage(imageFile: File) {
     resultG.drawImage(originalImage, 0, 0, null)
     resultG.dispose()
 
-    ImageIO.write(resultImage, Files.getFileExtension(imageFile.name), imageFile)
+    ImageIO.write(resultImage, imageFile.getExtension(), imageFile)
     println("Culled " + cullableFromRight + " (to " + resultImage.width + ") from right and " + cullableFromBottom + " (to " + resultImage.height + ") from bottom on " + imageFile.name)
 }

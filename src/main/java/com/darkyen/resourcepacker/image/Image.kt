@@ -14,7 +14,6 @@ import javax.imageio.ImageIO
 import com.darkyen.resourcepacker.isBitmapImage
 import com.darkyen.resourcepacker.isVectorImage
 import com.darkyen.resourcepacker.util.*
-import com.google.common.io.Files
 import java.awt.image.WritableRaster
 import java.io.File
 import java.util.*
@@ -577,8 +576,8 @@ fun Resource.ResourceFile.createImage():Image? {
 fun BufferedImage.saveToFile(file: File, format:String? = null) {
     var realFormat:String? = format
     if (realFormat == null) {
-        realFormat = Files.getFileExtension(file.name)
-        if (realFormat == null || realFormat.isBlank()) {
+        realFormat = file.getExtension()
+        if (realFormat.isBlank()) {
             realFormat = "png"
         }
     }

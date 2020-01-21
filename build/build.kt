@@ -30,7 +30,6 @@ val ResourcePacker by project {
 			dependency("com.badlogicgames.gdx", "gdx-freetype", gdxVersion),
 			dependency("com.badlogicgames.gdx", "gdx-freetype-platform", gdxVersion, classifier="natives-desktop"),
 			dependency("com.esotericsoftware", "minlog", "1.3.1"),
-			dependency("com.google.guava", "guava", "28.2-jre"),
 			dependency("org.apache.xmlgraphics", "batik-transcoder", "1.12"),
 			dependency("org.apache.xmlgraphics", "batik-codec", "1.12"),
 			dependency("org.lwjgl", "lwjgl-stb", lwjglVersion),
