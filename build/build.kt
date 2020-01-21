@@ -9,7 +9,7 @@ val ResourcePacker by project {
 
 	projectGroup set { "com.darkyen" }
 	projectName set { "ResourcePacker" }
-	projectVersion set { "2.5" }
+	projectVersion set { "2.6-SNAPSHOT" }
 
 	compilerOptions[JavaCompilerFlags.sourceVersion] = { "7" }
 	compilerOptions[JavaCompilerFlags.targetVersion] = { "7" }
