@@ -2,6 +2,8 @@
 import org.jline.utils.OSUtils
 import wemi.compile.JavaCompilerFlags
 import wemi.configuration
+import wemi.dependency.NoClassifier
+import wemi.publish.artifacts
 
 val ResourcePacker by project {
 
@@ -44,6 +46,9 @@ val ResourcePacker by project {
 			runOptions add { "-XstartOnFirstThread" }
 		}
 	}
+
+	// Workaround for Wemi 0.11 which broke this
+	publishArtifacts set { artifacts(NoClassifier, includeSources = false, includeDocumentation = false) }
 }
 
 val resourcePackTest by configuration("Test of Resource Packer", testing) {

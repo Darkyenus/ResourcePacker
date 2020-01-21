@@ -1,7 +1,9 @@
-# Resource Packer #
-[![](https://jitpack.io/v/Darkyenus/ResourcePacker.svg)](https://jitpack.io/#Darkyenus/ResourcePacker)
+# Resource Packer
+[![License](https://img.shields.io/badge/license-MIT-blue)](http://choosealicense.com/licenses/mit/)
+[![Wemi](https://img.shields.io/badge/Wemi-0.11-blue)](https://github.com/Darkyenus/wemi)
+[![JitPack](https://jitpack.io/v/Darkyenus/ResourcePacker.svg)](https://jitpack.io/#Darkyenus/ResourcePacker)
 
-## What does it do ##
+## What does it do
 
 It takes files from input directory, applies some tasks on them, and writes the result to the output directory.
 
@@ -26,7 +28,7 @@ Each task can determine when it should be executed, usually if the file has a fl
 For example `IgnoreTask` (see below) sees all files and directories, but performs its function only on those,
 that have the `ignore` flag.
 
-## Default tasks ##
+## Default tasks
 
 There is a couple of tasks that run by default in following order (order is important).
 **Images** can have a couple of special flags, see below. (Italic *image* in documentation signifies, that the image can have predefined special image flags as well.)
@@ -176,7 +178,7 @@ Removes all directories which are empty from the output. This is triggered by th
 * `retain` - do not remove this directory, even if it is empty
 
 
-## Image flags ##
+## Image flags
 
 When a task deals with an *image*, it can be a bitmap (png, jpg, ...) or a vector (svg) image.
 These images can have multiple flags, these can be thought of as a "loading" flags, because they affect the process of
@@ -201,7 +203,7 @@ produce images with baked ninepatch frame, such as RasterizeTask will for flag 5
 **Settings**
 * TileSize - Size of tile used in w<W>h<H> flag pattern
 
-## How to use ##
+## How to use
 
 Right now, it is best used through JVM based build system, like SBT or Gradle.
 Here are instructions on how to use it in build.sbt based project:
@@ -224,6 +226,6 @@ TaskKey[Unit]("packResources") := {
 
 _Note: UI icon may appear during packing, that is normal, packer needs it for GL context._
 
-## Tips ##
+## Tips
 - Use `PreferSymlinks` setting during development for faster packing or to eliminate the need to repack when editing
 	files that don't need packing, such as shaders.
