@@ -212,7 +212,7 @@ Modify your `build.kt` with following:
 - At the top of the file add:
 ```kt
 @file:BuildDependencyRepository("jitpack", "https://jitpack.io/")
-@file:BuildDependency("com.darkyen:ResourcePacker:2.5")
+@file:BuildDependency("com.darkyen:ResourcePacker:2.6")
 ```
 - Then add key:
 ```kt
@@ -221,10 +221,10 @@ val packResources by key<Path>("Pack resources")
 - Add its implementation:
 ```kt
 packResources set {
-    val resources = (WemiRootFolder / "resources")
+    val resources = WemiRootFolder / "resources"
     expiresWith(resources)
-    val assets = (WemiRootFolder / "assets")
-    resourcePack(PackingOperation(resources.toFile(), assets.toFile()))
+    val assets = WemiRootFolder / "assets"
+    packResources(resources.toFile(), assets.toFile())
     assets
 }
 ```
@@ -234,27 +234,6 @@ resources modify {
     it + FileSet(packResources.get())
 }
 ```
-
-### SBT
-Here are instructions on how to use it in build.sbt based project:
-
-1. In your project's `project/plugins.sbt` add lines:
-```
-resolvers += "jitpack" at "https://jitpack.io"
-
-libraryDependencies += "com.github.Darkyenus" %% "ResourcePacker" % "2.5"
-```
-2. In your project's build.sbt add lines:
-```
-import darkyenus.resourcepacker.{PackingOperation, LWJGLLauncher}
-
-TaskKey[Unit]("packResources") := {
-  LWJGLLauncher.launch(new PackingOperation(baseDirectory.value / "resources",baseDirectory.value / "assets"))
-}
-```
-3. Now you can run `sbt packResources`. That will pack contents of folder `resources` to `assets` in project's root directory.
-
-_Note: UI icon may appear during packing, that is normal, packer needs it for GL context._
 
 ## Tips
 - Use `PreferSymlinks` setting during development for faster packing or to eliminate the need to repack when editing
