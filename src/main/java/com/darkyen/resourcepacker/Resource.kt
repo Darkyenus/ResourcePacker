@@ -8,7 +8,7 @@ import java.nio.file.Files
 import com.badlogic.gdx.utils.Array as GdxArray
 
 /**
-
+ * Represents a file or a directory resource
  */
 @Suppress("unused")
 sealed class Resource {

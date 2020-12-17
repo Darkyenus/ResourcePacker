@@ -27,6 +27,7 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeType;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.*;
+import com.esotericsoftware.minlog.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -295,7 +296,7 @@ public class FreeTypePacker {
             mainGlyph.toBitmap(parameter.mono ? FreeType.FT_RENDER_MODE_MONO : FreeType.FT_RENDER_MODE_NORMAL);
         } catch (GdxRuntimeException e) {
             mainGlyph.dispose();
-            Gdx.app.log("FreeTypeFontGenerator", "Couldn't render char: " + codePoint);
+            Log.error("FreeTypeFontGenerator", "Couldn't render char: " + codePoint+" ("+new String(Character.toChars(codePoint))+")");
             return null;
         }
         FreeType.Bitmap mainBitmap = mainGlyph.getBitmap();

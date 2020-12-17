@@ -1,9 +1,9 @@
 @file:Suppress("unused")
-import org.jline.utils.OSUtils
 import wemi.compile.JavaCompilerFlags
 import wemi.configuration
 import wemi.dependency.NoClassifier
 import wemi.publish.artifacts
+import wemi.util.SystemInfo
 
 val ResourcePacker by project {
 
@@ -25,7 +25,7 @@ val ResourcePacker by project {
 
 	libraryDependencies addAll { setOf(
 			dependency("com.badlogicgames.gdx", "gdx", gdxVersion),
-			dependency("com.badlogicgames.gdx", "gdx-backend-lwjgl3", gdxVersion),
+			dependency("com.badlogicgames.gdx", "gdx-backend-lwjgl3", gdxVersion, scope = ScopeTest),
 			dependency("com.badlogicgames.gdx", "gdx-platform", gdxVersion, classifier ="natives-desktop"),
 			dependency("com.badlogicgames.gdx", "gdx-freetype", gdxVersion),
 			dependency("com.badlogicgames.gdx", "gdx-freetype-platform", gdxVersion, classifier="natives-desktop"),
@@ -41,7 +41,7 @@ val ResourcePacker by project {
 	runOptions add { "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" }
 
 	extend(testing) {
-		if (OSUtils.IS_OSX) {
+		if (SystemInfo.IS_MAC_OS) {
 			runOptions add { "-XstartOnFirstThread" }
 		}
 	}
