@@ -1,6 +1,6 @@
 # Resource Packer
 [![License](https://img.shields.io/badge/license-MIT-blue)](http://choosealicense.com/licenses/mit/)
-[![Wemi](https://img.shields.io/badge/Wemi-0.11-blue)](https://github.com/Darkyenus/wemi)
+[![Wemi](https://img.shields.io/badge/Wemi-0.15-blue)](https://github.com/Darkyenus/wemi)
 [![JitPack](https://jitpack.io/v/com.darkyen/ResourcePacker.svg)](https://jitpack.io/#com.darkyen/ResourcePacker)
 
 ## What does it do

@@ -50,14 +50,17 @@ val ResourcePacker by project {
 	publishArtifacts set { artifacts(NoClassifier, includeSources = false, includeDocumentation = false) }
 }
 
-val resourcePackTest by configuration("Test of Resource Packer", testing) {
+// ./wemi testing:resourcePackTest:run
+val resourcePackTest by configuration("Test of Resource Packer") {
 	mainClass set { "ResourcePackerTestKt" }
 }
 
-val usingResourcePackTest by configuration("Test using results of resourcePackTest", testing) {
+// ./wemi testing:usingResourcePackTest:run
+val usingResourcePackTest by configuration("Test using results of resourcePackTest") {
 	mainClass set { "UsingPackedResourcesTestKt" }
 }
 
-val freeTypePackerTest by configuration("Test of FreeType packer", testing) {
+// ./wemi testing:freeTypePackerTest:run
+val freeTypePackerTest by configuration("Test of FreeType packer") {
 	mainClass set { "FreeTypePackerTest" }
 }
