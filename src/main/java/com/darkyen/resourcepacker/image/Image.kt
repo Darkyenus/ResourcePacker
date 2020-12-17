@@ -1,22 +1,23 @@
+@file:Suppress("MemberVisibilityCanBePrivate", "ReplaceJavaStaticMethodWithKotlinAnalog", "PropertyName", "LocalVariableName")
+
 package com.darkyen.resourcepacker.image
 
 import com.badlogic.gdx.math.MathUtils
 import com.darkyen.resourcepacker.Resource
 import com.darkyen.resourcepacker.SettingKey
+import com.darkyen.resourcepacker.isBitmapImage
+import com.darkyen.resourcepacker.isVectorImage
+import com.darkyen.resourcepacker.util.*
 import com.darkyen.resourcepacker.util.batik.SVGFile
 import com.esotericsoftware.minlog.Log
 import java.awt.Color
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.BufferedInputStream
-import java.io.FileInputStream
-import javax.imageio.ImageIO
-import com.darkyen.resourcepacker.isBitmapImage
-import com.darkyen.resourcepacker.isVectorImage
-import com.darkyen.resourcepacker.util.*
-import java.awt.image.WritableRaster
 import java.io.File
+import java.io.FileInputStream
 import java.util.*
+import javax.imageio.ImageIO
 
 /**
  * Examples:
@@ -72,7 +73,7 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
     private var _height:Int = -1
     protected var _fileWidth:Int = -1
     protected var _fileHeight:Int = -1
-    protected var _backgroundColor:Color? = null
+    protected var _backgroundColor:RGBA8 = 0
     protected var _scaling:ImageScaling? = null
     protected var _ninepatch:Boolean = false
     protected var _ninepatchSplits:IntArray? = null
@@ -101,7 +102,7 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
 
             // Background color
             file.flags.matchFirst(PreBlendRegex) { (color) ->
-                _backgroundColor = parseHexColor(color).toAwt()
+                _backgroundColor = parseHexColor(color)
             }
 
             // Scaling
@@ -230,7 +231,7 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
             return _fileHeight
         }
 
-    val backgroundColor:Color?
+    val backgroundColor:RGBA8
         get() {
             ensureImagePrepared()
             return _backgroundColor
@@ -272,54 +273,51 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
         return scale(width, height, _ninepatchPads)
     }
 
-    abstract fun image(width: Int = this.width, height: Int = this.height, background: Color? = backgroundColor):BufferedImage
+    abstract fun image(width: Int = this.width, height: Int = this.height, background: RGBA8 = backgroundColor):RasterImage8
 
     abstract fun dispose()
 
     internal class BitmapImage(file:Resource.ResourceFile) : Image(file, true) {
 
-        override fun dispose() {
-            _image = null
+        private var data: RasterImage8? = null
+        private var dataNinepatchApplied = false
+
+        private fun ensureLoaded(): RasterImage8 {
+            val data = data ?: RasterImage8(file.file.absolutePath)
+                    ?: throw IllegalStateException("File does not exist or could not be loaded! This shouldn't happen. (" + file.file.canonicalPath + ") " + file)
+            this.data = data
+            return data
         }
 
-        private var _image:BufferedImage? = null
-
-        private fun image():BufferedImage {
-            var _image = _image
-            if (_image == null) {
-                _image = ImageIO.read(file.file) ?: throw IllegalStateException("File does not exist! This shouldn't happen. (" + file.file.canonicalPath + ") " + file)
-                this._image = _image
-            }
-            return _image
-
+        override fun dispose() {
+            data?.dispose()
+            data = null
         }
 
         override fun setupDimensions() {
-            val image = image()
-            _fileWidth = image.width
-            _fileHeight = image.height
+            var data = ensureLoaded()
 
-            if (_ninepatch) {
+            if (_ninepatch && !dataNinepatchApplied) {
                 // Mine ninepatch data from the image
-                _ninepatchSplits = getSplits(image)
-                _ninepatchPads = getPads(image, _ninepatchSplits)
+                _ninepatchSplits = getSplits(data)
+                _ninepatchPads = getPads(data, _ninepatchSplits)
 
-                val strippedImage = BufferedImage(image.width - 2, image.height - 2, BufferedImage.TYPE_INT_ARGB)
-                val g = strippedImage.createGraphics()
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)
-                g.drawImage(image, 0, 0, image.width, image.height, 1, 1, image.width + 1, image.height + 1, null)
-                g.dispose()
-
-                _image = strippedImage
-                _fileWidth -= 2
-                _fileHeight -= 2
+                val strippedImage = data.subImage(1, 1, data.width - 2, data.height - 2)
+                data.dispose()
+                this.data = strippedImage
+                data = strippedImage
+                dataNinepatchApplied = true
             }
+
+            _fileWidth = data.width
+            _fileHeight = data.height
         }
 
-        override fun image(width: Int, height: Int, background: Color?): BufferedImage {
-            return resizeImage(image(), width, height, background, scaling)
+        override fun image(width: Int, height: Int, background: RGBA8): RasterImage8 {
+            val scaled = ensureLoaded().scaled(width, height, scaling)
+            scaled.background(background)
+            return scaled
         }
-
     }
 
     internal class VectorImage(file:Resource.ResourceFile) : Image(file, false) {
@@ -360,17 +358,15 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
      * Returns the splits, or null if the image had no splits or the splits were only a single region. Splits are an int[4] that
      * has left, right, top, bottom.
      */
-    protected fun getSplits(image: BufferedImage): IntArray? {
-        val raster = image.raster
-
-        var startX = getSplitPoint(raster, 1, 0, true, true)
-        var endX = getSplitPoint(raster, startX, 0, false, true)
-        var startY = getSplitPoint(raster, 0, 1, true, false)
-        var endY = getSplitPoint(raster, 0, startY, false, false)
+    protected fun getSplits(image: RasterImage8): IntArray? {
+        var startX = getSplitPoint(image, 1, 0, startPoint = true, xAxis = true)
+        var endX = getSplitPoint(image, startX, 0, startPoint = false, xAxis = true)
+        var startY = getSplitPoint(image, 0, 1, startPoint = true, xAxis = false)
+        var endY = getSplitPoint(image, 0, startY, startPoint = false, xAxis = false)
 
         // Ensure pixels after the end are not invalid.
-        getSplitPoint(raster, endX + 1, 0, true, true)
-        getSplitPoint(raster, 0, endY + 1, true, false)
+        getSplitPoint(image, endX + 1, 0, startPoint = true, xAxis = true)
+        getSplitPoint(image, 0, endY + 1, startPoint = true, xAxis = false)
 
         // No splits, or all splits.
         if (startX == 0 && endX == 0 && startY == 0 && endY == 0) return null
@@ -378,17 +374,17 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
         // Subtraction here is because the coordinates were computed before the 1px border was stripped.
         if (startX != 0) {
             startX--
-            endX = raster.width - 2 - (endX - 1)
+            endX = image.width - 2 - (endX - 1)
         } else {
             // If no start point was ever found, we assume full stretch.
-            endX = raster.width - 2
+            endX = image.width - 2
         }
         if (startY != 0) {
             startY--
-            endY = raster.height - 2 - (endY - 1)
+            endY = image.height - 2 - (endY - 1)
         } else {
             // If no start point was ever found, we assume full stretch.
-            endY = raster.height - 2
+            endY = image.height - 2
         }
 
         return intArrayOf(startX, endX, startY, endY)
@@ -398,24 +394,22 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
      * Returns the pads, or null if the image had no pads or the pads match the splits.
      * Pads are an int[4] that has left, right, top, bottom.
      */
-    protected fun getPads(image: BufferedImage, splits: IntArray?): IntArray? {
-        val raster = image.raster
+    protected fun getPads(image: RasterImage8, splits: IntArray?): IntArray? {
+        val bottom = image.height - 1
+        val right = image.width - 1
 
-        val bottom = raster.height - 1
-        val right = raster.width - 1
-
-        var startX = getSplitPoint(raster, 1, bottom, true, true)
-        var startY = getSplitPoint(raster, right, 1, true, false)
+        var startX = getSplitPoint(image, 1, bottom, startPoint = true, xAxis = true)
+        var startY = getSplitPoint(image, right, 1, startPoint = true, xAxis = false)
 
         // No need to hunt for the end if a start was never found.
         var endX = 0
         var endY = 0
-        if (startX != 0) endX = getSplitPoint(raster, startX + 1, bottom, false, true)
-        if (startY != 0) endY = getSplitPoint(raster, right, startY + 1, false, false)
+        if (startX != 0) endX = getSplitPoint(image, startX + 1, bottom, startPoint = false, xAxis = true)
+        if (startY != 0) endY = getSplitPoint(image, right, startY + 1, startPoint = false, xAxis = false)
 
         // Ensure pixels after the end are not invalid.
-        getSplitPoint(raster, endX + 1, bottom, true, true)
-        getSplitPoint(raster, right, endY + 1, true, false)
+        getSplitPoint(image, endX + 1, bottom, startPoint = true, xAxis = true)
+        getSplitPoint(image, right, endY + 1, startPoint = true, xAxis = false)
 
         // No pads.
         if (startX == 0 && endX == 0 && startY == 0 && endY == 0) {
@@ -429,10 +423,10 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
         } else {
             if (startX > 0) {
                 startX--
-                endX = raster.width - 2 - (endX - 1)
+                endX = image.width - 2 - (endX - 1)
             } else {
                 // If no start point was ever found, we assume full stretch.
-                endX = raster.width - 2
+                endX = image.width - 2
             }
         }
         if (startY == 0 && endY == 0) {
@@ -441,10 +435,10 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
         } else {
             if (startY > 0) {
                 startY--
-                endY = raster.height - 2 - (endY - 1)
+                endY = image.height - 2 - (endY - 1)
             } else {
                 // If no start point was ever found, we assume full stretch.
-                endY = raster.height - 2
+                endY = image.height - 2
             }
         }
 
@@ -461,12 +455,9 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
      * if startPoint is false. Returns 0 if none found, as 0 is considered an invalid split point being in the outer border which
      * will be stripped.
      */
-    private fun getSplitPoint(raster: WritableRaster, startX: Int, startY: Int, startPoint: Boolean, xAxis: Boolean): Int {
-        val rgba = IntArray(4)
-
+    private fun getSplitPoint(image: RasterImage8, startX: Int, startY: Int, startPoint: Boolean, xAxis: Boolean): Int {
         var next = if (xAxis) startX else startY
-        val end = if (xAxis) raster.width else raster.height
-        val breakA = if (startPoint) 255 else 0
+        val end = if (xAxis) image.width else image.height
 
         var x = startX
         var y = startY
@@ -476,20 +467,36 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
             else
                 y = next
 
-            raster.getPixel(x, y, rgba)
-            if (rgba[3] == breakA) return next
+            val rgba = image.rgba(x, y)
+            checkValidNinePatchControl(x, y, rgba)
 
-            if (!startPoint && (rgba[0] != 0 || rgba[1] != 0 || rgba[2] != 0 || rgba[3] != 255))
-                splitError(x, y, rgba)
-
+            if (rgba.a > 64 && rgba.r < 64 == startPoint) {
+                return next
+            }
             next++
         }
 
         return 0
     }
 
-    private fun splitError(x: Int, y: Int, rgba: IntArray) {
-        throw RuntimeException("$file: Invalid ninepatch split pixel at $x, $y, rgba: ${rgba[0]}, ${rgba[1]}, ${rgba[2]}, ${rgba[3]}")
+    private fun checkValidNinePatchControl(x:Int, y:Int, rgba:RGBA8) {
+        val r = rgba.r
+        val g = rgba.g
+        val b = rgba.b
+        val a = rgba.a
+        val tolerance = 10
+
+        val validRanges = (a <= tolerance || a >= 0xFF - tolerance) &&
+                (r <= tolerance || r >= 0xFF - tolerance) &&
+                (g <= tolerance || g >= 0xFF - tolerance) &&
+                (b <= tolerance || b >= 0xFF - tolerance)
+        if (!validRanges) {
+            throw RuntimeException("$file: Invalid ninepatch split pixel at $x, $y, rgba: ${"%08x".format(rgba)} - the values are not clear enough")
+        }
+        val coherent = (r < 64 && g < 64 && b < 64) || (r >= 64 && g >= 64 && b >= 64)
+        if (!coherent) {
+            throw RuntimeException("$file: Invalid ninepatch split pixel at $x, $y, rgba: ${"%08x".format(rgba)} - RGB values are not coherent")
+        }
     }
 
     override fun toString(): String {

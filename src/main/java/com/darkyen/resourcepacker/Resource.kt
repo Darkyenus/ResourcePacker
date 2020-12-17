@@ -107,7 +107,7 @@ sealed class Resource {
             val array = directories.begin()
             val size = directories.size
             try {
-                for (i in 0..(size-1)) {
+                for (i in 0 until size) {
                     action(array[i])
                 }
             } finally {
@@ -121,7 +121,7 @@ sealed class Resource {
             val array = directories.begin()
             val size = directories.size
             try {
-                for (i in 0..(size-1)) {
+                for (i in 0 until size) {
                     val item = array[i]
                     if (filter(item)) {
                         action(array[i])
@@ -138,7 +138,7 @@ sealed class Resource {
             val array = files.begin()
             val size = files.size
             try {
-                for (i in 0..(size-1)) {
+                for (i in 0 until size) {
                     action(array[i])
                 }
             } finally {
@@ -152,7 +152,7 @@ sealed class Resource {
             val array = files.begin()
             val size = files.size
             try {
-                for (i in 0..(size-1)) {
+                for (i in 0 until size) {
                     val item = array[i]
                     if (filter(item)) {
                         action(array[i])
@@ -275,13 +275,13 @@ sealed class Resource {
             val directoriesSnapshot = childDirectories.begin()
             val directoriesSize = (childDirectories as GdxArray<ResourceDirectory>).size
 
-            for (i in 0..(filesSize - 1)) {
+            for (i in 0 until filesSize) {
                 if (filesSnapshot[i].applyTask(task)) {
                     wasSuccessful = true
                 }
             }
 
-            for (i in 0..(directoriesSize-1)) {
+            for (i in 0 until directoriesSize) {
                 if (directoriesSnapshot[i].applyTask(task)) {
                     wasSuccessful = true
                 }
