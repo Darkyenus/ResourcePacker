@@ -272,6 +272,8 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
         return scale(width, height, _ninepatchPads)
     }
 
+    abstract fun couldBeNinepatch():Boolean
+
     abstract fun image(width: Int = this.width, height: Int = this.height, background: Color? = backgroundColor):BufferedImage
 
     abstract fun dispose()
@@ -320,6 +322,97 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
             return resizeImage(image(), width, height, background, scaling)
         }
 
+        override fun couldBeNinepatch(): Boolean {
+            if (ninepatch) {
+                return true
+            }
+
+            // Try to detect it
+            val image = image()
+            val width = image.width
+            val height = image.height
+            if (width < 3 || height < 3) {
+                return false
+            }
+
+            if (ninepatchBlack(image.getRGB(0, 0)) != false) {
+                return false
+            }
+
+            var topBlack = false
+            var bottomBlack = false
+            var topBlackOnce = false
+            var bottomBlackOnce = false
+            for (x in 1 until width) {
+                val top = ninepatchBlack(image.getRGB(x, 0)) ?: return false
+                val bottom = ninepatchBlack(image.getRGB(x, height - 1)) ?: return false
+                if (topBlack != top) {
+                    if (top && topBlackOnce) {
+                        return false
+                    }
+                    topBlack = top
+                    topBlackOnce = true
+                }
+                if (bottomBlack != bottom) {
+                    if (bottom && bottomBlackOnce) {
+                        return false
+                    }
+                    bottomBlack = top
+                    bottomBlackOnce = true
+                }
+            }
+
+            var leftBlack = false
+            var rightBlack = false
+            var leftBlackOnce = false
+            var rightBlackOnce = false
+            for (y in 1 until height) {
+                val left = ninepatchBlack(image.getRGB(0, y)) ?: return false
+                val right = ninepatchBlack(image.getRGB(width - 1, y)) ?: return false
+                if (leftBlack != left) {
+                    if (left && leftBlackOnce) {
+                        return false
+                    }
+                    leftBlack = left
+                    leftBlackOnce = true
+                }
+                if (rightBlack != right) {
+                    if (right && rightBlackOnce) {
+                        return false
+                    }
+                    rightBlack = left
+                    rightBlackOnce = true
+                }
+            }
+
+            if (topBlack || bottomBlack || leftBlack || rightBlack) {
+                return false
+            }
+
+            if (!topBlackOnce && !leftBlackOnce) {
+                return false
+            }
+
+            if (!topBlackOnce && bottomBlackOnce) {
+                return false
+            }
+
+            if (!leftBlackOnce && rightBlackOnce) {
+                return false
+            }
+
+            return true
+        }
+
+        private fun ninepatchBlack(argb:Int):Boolean? {
+            if ((argb and 0xFF000000.toInt()) == 0) {
+                return false
+            }
+            if (argb == 0xFF000000.toInt()) {
+                return true
+            }
+            return null
+        }
     }
 
     internal class VectorImage(file:Resource.ResourceFile) : Image(file, false) {
@@ -340,6 +433,8 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
             _fileWidth = Math.round(document.docWidth).toInt()
             _fileHeight = Math.round(document.docHeight).toInt()
         }
+
+        override fun couldBeNinepatch(): Boolean = super.ninepatch
 
         override fun image(width: Int, height: Int, background: Color?): BufferedImage {
             return document.rasterize(width, height, background)
