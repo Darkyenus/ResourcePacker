@@ -357,7 +357,7 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
                     if (bottom && bottomBlackOnce) {
                         return false
                     }
-                    bottomBlack = top
+                    bottomBlack = bottom
                     bottomBlackOnce = true
                 }
             }
@@ -380,7 +380,7 @@ sealed class Image(val file:Resource.ResourceFile, private val canBeNinepatch:Bo
                     if (right && rightBlackOnce) {
                         return false
                     }
-                    rightBlack = left
+                    rightBlack = right
                     rightBlackOnce = true
                 }
             }
